@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>给我的最爱</title>
+  <title>破碎感三角粒子爱心</title>
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -170,6 +170,7 @@
     let titleTarget = 0;
     let photoReveal = 0;
     let photoReady = false;
+    let mobilePinnedReveal = false;
     const photoInput = document.getElementById('photoInput');
     const revealPhoto = new Image();
     const PHOTO_STORAGE_KEY = 'love-heart-photo-data-url';
@@ -224,7 +225,7 @@
     });
 
     // 你要加自己的歌曲时，只需要把下面这行改成你的文件名，例如 './love.mp3'
-    const bgm = new Audio('./love.mp3');
+    const bgm = new Audio('./your-song.mp3');
     bgm.loop = true;
     bgm.volume = 0.72;
 
@@ -945,10 +946,11 @@
       const dx = pointer.x - cx;
       const dy = pointer.y - cy;
       const inside = Math.pow(dx / (unit * 0.26), 2) + Math.pow((dy + unit * 0.02) / (unit * 0.20), 2) < 1;
-      titleTarget = inside ? 1 : 0;
-      const easing = inside ? 0.075 : 0.045;
+      const revealActive = inside || mobilePinnedReveal;
+      titleTarget = revealActive ? 1 : 0;
+      const easing = revealActive ? 0.075 : 0.045;
       titleReveal += (titleTarget - titleReveal) * easing;
-      photoReveal += ((inside ? 1 : 0) - photoReveal) * 0.055;
+      photoReveal += ((revealActive ? 1 : 0) - photoReveal) * 0.055;
       if (titleReveal < 0.012 && photoReveal < 0.012) return;
 
       const reveal = titleReveal * titleReveal * (3 - 2 * titleReveal);
@@ -1413,6 +1415,19 @@
       ctx.restore();
     }
 
+
+    function isPointInCenterRevealZone(x, y) {
+      const dx = x - cx;
+      const dy = y - cy;
+      return Math.pow(dx / (unit * 0.26), 2) + Math.pow((dy + unit * 0.02) / (unit * 0.20), 2) < 1;
+    }
+
+    function syncPointerFromTouch(touch) {
+      if (!touch) return;
+      pointer.x = touch.clientX;
+      pointer.y = touch.clientY;
+    }
+
     function frame(now) {
       const dt = Math.min(1.8, (now - (frame.last || now)) / 16.6667);
       frame.last = now;
@@ -1448,15 +1463,37 @@
       pointer.x = -9999;
       pointer.y = -9999;
     });
+    window.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      syncPointerFromTouch(t);
+
+      if (isPointInCenterRevealZone(t.clientX, t.clientY)) {
+        mobilePinnedReveal = !mobilePinnedReveal;
+      } else if (!mobilePinnedReveal) {
+        pointer.x = -9999;
+        pointer.y = -9999;
+      }
+    }, { passive: true });
+
     window.addEventListener('touchmove', (e) => {
       const t = e.touches[0];
       if (!t) return;
-      pointer.x = t.clientX;
-      pointer.y = t.clientY;
+      syncPointerFromTouch(t);
     }, { passive: true });
+
     window.addEventListener('touchend', () => {
-      pointer.x = -9999;
-      pointer.y = -9999;
+      if (!mobilePinnedReveal) {
+        pointer.x = -9999;
+        pointer.y = -9999;
+      }
+    });
+
+    window.addEventListener('touchcancel', () => {
+      if (!mobilePinnedReveal) {
+        pointer.x = -9999;
+        pointer.y = -9999;
+      }
     });
 
     resize();
