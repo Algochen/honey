@@ -141,12 +141,174 @@
       }
     }
 
+
+
+    .subtitle {
+      position: fixed;
+      top: 82px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 12;
+      color: rgba(255, 218, 224, 0.55);
+      font-size: clamp(12px, 1.1vw, 16px);
+      letter-spacing: 0.42em;
+      text-indent: 0.42em;
+      white-space: nowrap;
+      pointer-events: none;
+      text-shadow: 0 0 12px rgba(255, 120, 148, 0.18);
+      mix-blend-mode: screen;
+    }
+
+    .corner-poem {
+      position: fixed;
+      z-index: 12;
+      color: rgba(255, 228, 232, 0.48);
+      font-family: "STKaiti", "KaiTi", cursive;
+      font-size: clamp(14px, 1.25vw, 20px);
+      line-height: 1.9;
+      letter-spacing: 0.16em;
+      white-space: pre-line;
+      pointer-events: none;
+      text-shadow: 0 0 12px rgba(255, 100, 130, 0.10);
+    }
+    .corner-poem.left-bottom { left: 34px; bottom: 78px; text-align: left; }
+    .corner-poem.right-bottom { right: 34px; bottom: 78px; text-align: right; }
+
+    .side-verse {
+      position: fixed;
+      top: 50%;
+      z-index: 11;
+      transform: translateY(-50%);
+      color: rgba(255, 216, 224, 0.30);
+      font-family: "STKaiti", "KaiTi", cursive;
+      font-size: clamp(16px, 1.35vw, 22px);
+      letter-spacing: 0.32em;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      pointer-events: none;
+      text-shadow: 0 0 12px rgba(255, 88, 120, 0.10);
+    }
+    .side-verse.left { left: 26px; }
+    .side-verse.right { right: 26px; }
+
+    .floating-heart {
+      position: fixed;
+      color: rgba(255, 196, 208, 0.16);
+      font-size: clamp(10px, 1vw, 16px);
+      pointer-events: none;
+      user-select: none;
+      animation: floatHeart var(--dur, 12s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+      filter: drop-shadow(0 0 8px rgba(255, 90, 126, 0.16));
+      mix-blend-mode: screen;
+      will-change: transform, opacity;
+    }
+
+    @keyframes floatHeart {
+      0% {
+        transform: translate3d(0, -8px, 0) scale(0.86);
+        opacity: 0.08;
+      }
+      22% {
+        opacity: 0.22;
+      }
+      48% {
+        transform: translate3d(calc(var(--tx, 12px) * 0.55), 18px, 0) scale(1.02);
+        opacity: 0.34;
+      }
+      72% {
+        transform: translate3d(var(--tx, 12px), 44px, 0) scale(1.10);
+        opacity: 0.28;
+      }
+      100% {
+        transform: translate3d(calc(var(--tx, 12px) * 1.35), 76px, 0) scale(0.92);
+        opacity: 0.10;
+      }
+    }
+
+    .signature {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 12;
+      color: rgba(255, 220, 226, 0.28);
+      font-size: clamp(11px, 1vw, 14px);
+      letter-spacing: 0.28em;
+      white-space: nowrap;
+      pointer-events: none;
+      text-shadow: 0 0 10px rgba(255, 100, 136, 0.10);
+    }
+
+    @media (max-width: 640px) {
+      .subtitle { top: 72px; font-size: 11px; letter-spacing: 0.24em; text-indent: 0.24em; }
+      .corner-poem { font-size: 12px; line-height: 1.7; }
+      .corner-poem.left-bottom { left: 14px; bottom: 90px; max-width: 32vw; }
+      .corner-poem.right-bottom { right: 14px; bottom: 90px; max-width: 34vw; }
+      .side-verse { font-size: 12px; opacity: 0.8; }
+      .side-verse.left { left: 8px; }
+      .side-verse.right { right: 8px; }
+      .signature { bottom: 10px; font-size: 10px; letter-spacing: 0.16em; }
+    }
+
   </style>
 </head>
 <body>
   <div class="blessing">愿与你朝朝暮暮，欢喜与共，余生皆是心动</div>
+  <div class="subtitle">山河远阔，人间烟火，无一是你，无一不是你</div>
+  <div class="side-verse left">所念皆星河　星河皆是你</div>
+  <div class="side-verse right">乍见心欢　久处仍怦然</div>
+  <div class="corner-poem left-bottom">《越人歌》
+今夕何夕兮，搴舟中流。
+今日何日兮，得与王子同舟。
+蒙羞被好兮，不訾诟耻。
+心几烦而不绝兮，得知王子。</div>
+  <div class="corner-poem right-bottom">晓看天色暮看云
+行也思君，坐也思君
+见字如晤，目光所至
+皆是你留下的温柔</div>
+  <div class="floating-heart" style="left:8%;top:10%;--tx:12px;--dur:14s;--delay:-1s;">❤</div>
+  <div class="floating-heart" style="left:13%;top:24%;--tx:16px;--dur:12.8s;--delay:-5s;">❤</div>
+  <div class="floating-heart" style="left:18%;top:40%;--tx:10px;--dur:13.5s;--delay:-2.3s;">❤</div>
+  <div class="floating-heart" style="left:10%;top:57%;--tx:14px;--dur:11.6s;--delay:-7s;">❤</div>
+  <div class="floating-heart" style="left:16%;top:76%;--tx:18px;--dur:12.2s;--delay:-3.8s;">❤</div>
+  <div class="floating-heart" style="left:24%;top:16%;--tx:9px;--dur:13.8s;--delay:-6.2s;">❤</div>
+  <div class="floating-heart" style="left:26%;top:70%;--tx:11px;--dur:12.9s;--delay:-2.6s;">❤</div>
+  <div class="floating-heart" style="left:34%;top:86%;--tx:7px;--dur:10.9s;--delay:-4.1s;">❤</div>
+  <div class="floating-heart" style="left:66%;top:13%;--tx:-9px;--dur:13.1s;--delay:-5.5s;">❤</div>
+  <div class="floating-heart" style="left:74%;top:26%;--tx:-14px;--dur:12.6s;--delay:-1.9s;">❤</div>
+  <div class="floating-heart" style="left:82%;top:40%;--tx:-10px;--dur:14.2s;--delay:-6.8s;">❤</div>
+  <div class="floating-heart" style="left:88%;top:58%;--tx:-16px;--dur:11.8s;--delay:-3.4s;">❤</div>
+  <div class="floating-heart" style="left:80%;top:76%;--tx:-12px;--dur:12.4s;--delay:-7.2s;">❤</div>
+  <div class="floating-heart" style="left:72%;top:68%;--tx:-8px;--dur:13.6s;--delay:-2.7s;">❤</div>
+  <div class="floating-heart" style="left:58%;top:84%;--tx:-6px;--dur:10.8s;--delay:-4.8s;">❤</div>
+  <div class="floating-heart" style="left:42%;top:8%;--tx:5px;--dur:15s;--delay:-8s;">❤</div>
+  <div class="floating-heart" style="left:50%;top:88%;--tx:0px;--dur:11.2s;--delay:-1.4s;">❤</div>
+  <div class="floating-heart" style="left:92%;top:18%;--tx:-13px;--dur:12.7s;--delay:-5.9s;">❤</div>
+  <div class="signature">2026.03.19　予你一场不落幕的心动</div>
+
+  <div id="dragHint" style="
+    position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    color:rgba(255,200,220,0.45);font-size:13px;letter-spacing:0.12em;
+    pointer-events:none;user-select:none;text-align:center;
+    transition:opacity 1s ease;
+  ">拖动立体旋转 · 点击中心探索内部世界 · 双击或按 R 归位</div>
+
+  <button id="returnBtn" style="
+    position:fixed;left:22px;bottom:22px;z-index:20;
+    width:52px;height:52px;border-radius:50%;
+    border:1px solid rgba(255,200,220,0.22);
+    background:radial-gradient(circle at 35% 30%,rgba(255,255,255,0.18),rgba(255,100,140,0.16) 40%,rgba(80,0,20,0.70));
+    color:rgba(255,240,245,0.92);font-size:22px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 24px rgba(0,0,0,0.28),inset 0 0 16px rgba(255,255,255,0.06);
+    backdrop-filter:blur(8px);
+    opacity:0;pointer-events:none;
+    transition:opacity 0.4s ease,transform 0.2s ease;
+    -webkit-tap-highlight-color:transparent;
+  " title="归位 (R / 双击)">⟳</button>
   <canvas id="c"></canvas>
-  <input id="photoInput" type="file" accept="image/*" style="display:none;" />
+  <input id="innerPhotoInput" type="file" accept="image/*" style="display:none;" />
   <button id="musicBtn" class="music-btn" type="button" aria-label="播放音乐">
     <svg id="musicIcon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.07-5.18a1 1 0 0 0 0-1.68L9.54 5.98A1 1 0 0 0 8 6.82Z"></path>
@@ -155,7 +317,7 @@
 
 
   <script>
-    const PHOTO_SRC = './she.jpg'; // 替换成你的照片链接
+    const INNER_PHOTO_SRC = './she.jpg'; // ★ 内部世界照片 —— 改成你的图片路径即可
     const canvas = document.getElementById('c');
     const ctx = canvas.getContext('2d');
 
@@ -167,62 +329,159 @@
     let time = 0;
     let beatPhase = 0;
     let titleReveal = 0;
-    let titleTarget = 0;
-    let photoReveal = 0;
-    let photoReady = false;
-    let mobilePinnedReveal = false;
-    const photoInput = document.getElementById('photoInput');
-    const revealPhoto = new Image();
-    const PHOTO_STORAGE_KEY = 'love-heart-photo-data-url';
-    revealPhoto.crossOrigin = 'anonymous';
-    revealPhoto.onload = () => { photoReady = true; };
 
-    function loadDefaultPhoto() {
-      if (PHOTO_SRC) {
-        revealPhoto.src = PHOTO_SRC;
-      }
-    }
+    // ══ 3D 立体旋转状态 ══
+    // 欧拉角（弧度）
+    let rotX = 0;   // 绕 X 轴（上下翻转）
+    let rotY = 0;   // 绕 Y 轴（左右旋转）
+    // 惯性角速度
+    let velX = 0;
+    let velY = 0;
+    // 归位动画
+    let isReturning = false;
+    let returnStartX = 0;
+    let returnStartY = 0;
+    let returnProgress = 0;
+    const RETURN_FRAMES = 55; // ~0.9秒
+    // 拖拽
+    let isDraggingHeart = false;
+    let dragPrevX = 0;
+    let dragPrevY = 0;
+    let dragDX = 0;
+    let dragDY = 0;
+    // 旧兼容 —— 平面旋转已废弃，但 heartRotation 保留供 isPointOnHeartEdge 等使用
+    let heartRotation = 0;
+    let heartAngularVelocity = 0;
 
-    function restoreSavedPhoto() {
+    // ── 内部世界照片 ──
+    const innerPhoto = new Image();
+    let innerPhotoReady = false;
+    const INNER_PHOTO_KEY = 'love-heart-inner-photo-data-url';
+    innerPhoto.crossOrigin = 'anonymous';
+    innerPhoto.onload = () => { innerPhotoReady = true; };
+    (function loadInnerPhoto(){
       try {
-        const saved = localStorage.getItem(PHOTO_STORAGE_KEY);
-        if (saved) {
-          revealPhoto.src = saved;
-          return true;
-        }
-      } catch (err) {
-        console.warn('读取本地保存的照片失败。', err);
-      }
-      return false;
-    }
-
-    if (!restoreSavedPhoto()) {
-      loadDefaultPhoto();
-    }
-
-    photoInput.addEventListener('change', (e) => {
+        const saved = localStorage.getItem(INNER_PHOTO_KEY);
+        if (saved) { innerPhoto.src = saved; return; }
+      } catch(e){}
+      if (INNER_PHOTO_SRC) innerPhoto.src = INNER_PHOTO_SRC;
+    })();
+    const innerPhotoInput = document.getElementById('innerPhotoInput');
+    innerPhotoInput.addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
-        const dataUrl = reader.result;
-        try {
-          localStorage.setItem(PHOTO_STORAGE_KEY, dataUrl);
-        } catch (err) {
-          console.warn('保存照片到本地失败，可能是图片太大或浏览器限制。', err);
-        }
-        revealPhoto.src = dataUrl;
+        const url = reader.result;
+        try { localStorage.setItem(INNER_PHOTO_KEY, url); } catch(err){}
+        innerPhoto.src = url;
       };
       reader.readAsDataURL(file);
-      photoInput.value = '';
+      innerPhotoInput.value = '';
     });
-
+    // 按 I 键上传内部世界照片
     window.addEventListener('keydown', (e) => {
-      if ((e.key === 'p' || e.key === 'P') && !e.repeat) {
+      if ((e.key === 'i' || e.key === 'I') && !e.repeat && innerWorldActive) {
         e.preventDefault();
-        photoInput.click();
+        innerPhotoInput.click();
       }
     });
+
+    // 进入爱心内部世界
+    let innerWorldReveal = 0;
+    let innerWorldActive = false;
+    let innerWorldParticles = [];
+    let innerWorldStars = [];
+    let innerWorldMeteors = [];
+    let innerWorldPetals = [];
+    let innerWorldPoems = [];
+    let innerWorldTime = 0;
+    const INNER_WORLD_LINES = [
+      '你是我宇宙里最温柔的一束光',
+      '目光绕过银河，最后还是停在你身上',
+      '心动不是一瞬，是每次望向你时都重新发生',
+      '把岁月折成星光，也想轻轻落在你肩上',
+      '若万物皆有归途，我的归途便是你'
+    ];
+
+    function initInnerWorld() {
+      innerWorldParticles = [];
+      innerWorldStars = [];
+      innerWorldMeteors = [];
+      innerWorldPetals = [];
+      innerWorldPoems = [];
+
+      for (let i = 0; i < 236; i++) {
+        const arm = i % 2;
+        const radius = 0.12 + Math.pow(Math.random(), 0.72) * 0.95;
+        const armOffset = arm * Math.PI;
+        const angle = armOffset + radius * 4.8 + (Math.random() - 0.5) * 0.6;
+        innerWorldParticles.push({
+          arm,
+          angle,
+          radius,
+          speed: 0.0022 + Math.random() * 0.0048,
+          size: 1.2 + Math.random() * 4.2,
+          alpha: 0.30 + Math.random() * 0.70,
+          hue: 320 + Math.random() * 52,
+          seed: Math.random() * 1000,
+          depth: Math.random(),
+          lift: (Math.random() - 0.5) * 0.22
+        });
+      }
+
+      for (let i = 0; i < 58; i++) {
+        const big = i < 10;
+        innerWorldStars.push({
+          x: Math.random(),
+          y: Math.random(),
+          size: big ? (2.5 + Math.random() * 3.8) : (0.6 + Math.random() * 1.9),
+          twinkle: Math.random() * 1000,
+          alpha: big ? (0.65 + Math.random() * 0.35) : (0.35 + Math.random() * 0.5),
+          big
+        });
+      }
+
+      for (let i = 0; i < 8; i++) {
+        innerWorldMeteors.push({
+          progress: Math.random(),
+          speed: 0.0035 + Math.random() * 0.004,
+          y: 0.10 + Math.random() * 0.55,
+          len: 90 + Math.random() * 140,
+          alpha: 0.24 + Math.random() * 0.26,
+          delay: Math.random() * 1.2,
+          seed: Math.random() * 1000
+        });
+      }
+
+      for (let i = 0; i < 26; i++) {
+        const side = i % 4;
+        innerWorldPetals.push({
+          side,
+          progress: Math.random(),
+          speed: 0.0018 + Math.random() * 0.0028,
+          drift: Math.random() * Math.PI * 2,
+          size: 8 + Math.random() * 14,
+          alpha: 0.10 + Math.random() * 0.14,
+          spin: -0.02 + Math.random() * 0.04,
+          rot: Math.random() * Math.PI * 2,
+          seed: Math.random() * 1000
+        });
+      }
+
+      INNER_WORLD_LINES.forEach((line, idx) => {
+        const ang = -Math.PI * 0.38 + idx * (Math.PI * 0.19);
+        innerWorldPoems.push({
+          text: line,
+          angle: ang,
+          radius: 0.31 + (idx % 2) * 0.04,
+          phase: idx * 0.85 + Math.random() * 0.3,
+          alpha: 0.14 + Math.random() * 0.08
+        });
+      });
+    }
+    initInnerWorld();
+    // 旧悬停照片逻辑已移至内部世界（点击中心进入）
 
     // 你要加自己的歌曲时，只需要把下面这行改成你的文件名，例如 './love.mp3'
     const bgm = new Audio('./your-song.mp3');
@@ -272,12 +531,12 @@
     const streamers = [];
     const ambientBits = [];
     const petals = [];
-    const SHARD_COUNT = 940;
-    const GLOW_COUNT = 90;
-    const FLOATER_COUNT = 42;
-    const STREAMER_COUNT = 48;
-    const AMBIENT_COUNT = 34;
-    const PETAL_COUNT = 22;
+    const SHARD_COUNT = 1220;
+    const GLOW_COUNT = 94;
+    const FLOATER_COUNT = 34;
+    const STREAMER_COUNT = 54;
+    const AMBIENT_COUNT = 42;
+    const PETAL_COUNT = 24;
     const MESH_LINK_SPAN = 10;
 
     function resize() {
@@ -295,10 +554,188 @@
       buildScene();
     }
 
+    // 2D 心形轮廓（供 drawInnerWorld 等使用）
     function heartPoint(t, s = 1) {
       const x = 16 * Math.pow(Math.sin(t), 3);
       const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
       return { x: x * s, y: y * s };
+    }
+
+    // ══ 真正的3D立体爱心：挤出法（Extrusion）══
+    //
+    // 方法：XY平面保持标准心形轮廓，Z方向给予厚度
+    // 心形在XY的归一化坐标：x∈[-1,1]，y∈[-0.81,0.44]
+    // 厚度：Z方向最大半厚度 = zMax，边缘处收缩为0（圆润轮廓）
+    //
+    // 归一化：heartPoint(t,1) 除以16 → x∈[-1,1]
+    // zMax = 0.35（相对于心形宽度）
+
+    const HNORM = 16; // heartPoint 归一化系数
+
+    // 判断归一化点 (nx,ny) 是否在心形轮廓内部
+    // 用射线法：统计从该点向右发出射线与心形轮廓的交叉次数
+    function insideHeart2D(nx, ny) {
+      // 快速近似：用参数曲线离散采样做点在多边形内判断
+      // 注意 heartPoint 已除以 HNORM 归一化
+      let inside = false;
+      const N = 120;
+      let x0 = 0, y0 = 0;
+      for (let i = 0; i <= N; i++) {
+        const t = (i / N) * Math.PI * 2;
+        const h = heartPoint(t, 1);
+        const x1 = h.x / HNORM, y1 = h.y / HNORM;
+        if (i > 0) {
+          if (((y0 > ny) !== (y1 > ny)) &&
+              (nx < (x1 - x0) * (ny - y0) / (y1 - y0) + x0)) {
+            inside = !inside;
+          }
+        }
+        x0 = x1; y0 = y1;
+      }
+      return inside;
+    }
+
+    // 计算归一化点 (nx,ny) 到心形轮廓的最近距离（用于边缘收缩）
+    function distToHeartBoundary(nx, ny) {
+      let minD = Infinity;
+      const N = 200;
+      for (let i = 0; i < N; i++) {
+        const t = (i / N) * Math.PI * 2;
+        const h = heartPoint(t, 1);
+        const d = Math.hypot(nx - h.x / HNORM, ny - h.y / HNORM);
+        if (d < minD) minD = d;
+      }
+      return minD;
+    }
+
+    // 预计算心形轮廓多边形（供 insideHeart2D 用，提升性能）
+    const _heartPoly = [];
+    (function() {
+      const N = 200;
+      for (let i = 0; i <= N; i++) {
+        const h = heartPoint((i / N) * Math.PI * 2, 1);
+        _heartPoly.push(h.x / HNORM, h.y / HNORM);
+      }
+    })();
+
+    function insideHeart2DFast(nx, ny) {
+      let inside = false;
+      const len = _heartPoly.length;
+      let x0 = _heartPoly[len - 2], y0 = _heartPoly[len - 1];
+      for (let i = 0; i < len; i += 2) {
+        const x1 = _heartPoly[i], y1 = _heartPoly[i + 1];
+        if (((y0 > ny) !== (y1 > ny)) &&
+            (nx < (x1 - x0) * (ny - y0) / (y1 - y0) + x0)) {
+          inside = !inside;
+        }
+        x0 = x1; y0 = y1;
+      }
+      return inside;
+    }
+
+    // 预计算弧长表，供表面均匀采样
+    const _tTable = [], _cumLen = [];
+    (function buildArcTable() {
+      const N = 400;
+      let total = 0, px0 = 0, py0 = 0;
+      for (let i = 0; i <= N; i++) {
+        const t = (i / N) * Math.PI * 2;
+        const h = heartPoint(t, 1);
+        if (i > 0) total += Math.hypot(h.x - px0, h.y - py0);
+        _tTable.push(t);
+        _cumLen.push(total);
+        px0 = h.x; py0 = h.y;
+      }
+      for (let i = 0; i < _cumLen.length; i++) _cumLen[i] /= total;
+    })();
+
+    function sampleT() {
+      const u = Math.random();
+      let lo = 0, hi = _cumLen.length - 1;
+      while (lo < hi - 1) {
+        const mid = (lo + hi) >> 1;
+        if (_cumLen[mid] < u) lo = mid; else hi = mid;
+      }
+      const frac = (_cumLen[hi] - _cumLen[lo]) > 1e-9
+        ? (u - _cumLen[lo]) / (_cumLen[hi] - _cumLen[lo]) : 0;
+      return _tTable[lo] + frac * (_tTable[hi] - _tTable[lo]);
+    }
+
+    // ── 3D爱心采样：挤出体表面 ──
+    // 表面分为：前面(z>0)、后面(z<0)、侧边(轮廓附近)
+    const Z_THICK = 0.28;   // 半厚度（归一化，爱心宽度的28%）
+
+    // Z方向截面形状：椭圆弧，边缘收缩为0
+    // d = 点到心形中心轴的距离比例（0=中心，1=边缘）
+    function zProfile(d) {
+      // 半圆弧截面：z_max * sqrt(1 - d²)
+      return Z_THICK * Math.sqrt(Math.max(0, 1 - d * d));
+    }
+
+    // 采样前面/后面
+    function sampleHeart3DFace(isFront) {
+      // 在心形内部随机采样 (nx, ny)
+      for (let attempt = 0; attempt < 200; attempt++) {
+        const nx = rand(-1.02, 1.02);
+        const ny = rand(-0.84, 0.46);
+        if (!insideHeart2DFast(nx, ny)) continue;
+        // 计算该点到边界的距离，决定 z 抖动
+        // 前面 z 略微凸出，后面 z 略微凹进
+        const zSign = isFront ? 1 : -1;
+        const zJitter = rand(0, Z_THICK * 0.18); // 面有轻微起伏
+        return {
+          x: nx,
+          y: ny,
+          z: zSign * (Z_THICK * 0.82 + zJitter),
+          isFace: true
+        };
+      }
+      return { x: 0, y: -0.1, z: isFront ? Z_THICK : -Z_THICK, isFace: true };
+    }
+
+    // 采样侧边（轮廓边缘环绕面）
+    function sampleHeart3DEdge() {
+      const t  = sampleT();           // 轮廓上的点
+      const h  = heartPoint(t, 1);
+      const nx = h.x / HNORM;
+      const ny = h.y / HNORM;
+      // z 从 -Z_THICK 到 +Z_THICK 均匀分布
+      const z  = rand(-Z_THICK, Z_THICK);
+      // 法线方向（轮廓切线的垂线）做一点抖动
+      const jitter = rand(-0.015, 0.015);
+      const dt = 0.05;
+      const h2 = heartPoint(t + dt, 1);
+      const tx = (h2.x - h.x) / HNORM, ty = (h2.y - h.y) / HNORM;
+      const len = Math.hypot(tx, ty) || 1;
+      const nx2 = ty / len, ny2 = -tx / len; // 内法线
+      return {
+        x: nx + nx2 * jitter,
+        y: ny + ny2 * jitter,
+        z,
+        isEdge: true
+      };
+    }
+
+    // 采样内部体积（填充感）
+    function sampleHeart3DInner() {
+      for (let attempt = 0; attempt < 220; attempt++) {
+        const nx = rand(-1.02, 1.02);
+        const ny = Math.random() < 0.62 ? rand(-0.72, 0.08) : rand(-0.84, 0.46);
+        if (!insideHeart2DFast(nx, ny)) continue;
+        const lowerBias = Math.max(0, Math.min(1, (0.12 - ny) / 0.96));
+        const zRange = Z_THICK * (0.56 + lowerBias * 0.26);
+        const z = rand(-zRange, zRange);
+        return { x: nx, y: ny, z, depth: Math.abs(z) / Z_THICK };
+      }
+      return { x: 0, y: -0.14, z: 0, depth: 0 };
+    }
+
+    // 统一采样接口（供 buildScene 调用）
+    function sampleHeart3DSurface() {
+      const r = Math.random();
+      if (r < 0.38)      return sampleHeart3DFace(true);   // 前面
+      else if (r < 0.70) return sampleHeart3DEdge();        // 侧边
+      else               return sampleHeart3DFace(false);   // 后面
     }
 
     function rand(min, max) {
@@ -313,110 +750,97 @@
       ambientBits.length = 0;
       petals.length = 0;
 
+      // ══ 参数化 3D 爱心表面 + 内部体积粒子 ══
+      // 坐标已归一化到 [-1,1]（在 sampleHeart3DSurface/Inner 内完成）
+      const SURFACE_RATIO = 0.68; // 68%表面，32%内部体积
+
       for (let i = 0; i < SHARD_COUNT; i++) {
-        const t = Math.random() * Math.PI * 2;
-        const edge = heartPoint(t, 1);
-
-        // 轮廓依然清晰，但把中层和内层补厚，避免内部太空
-        const roll = Math.random();
-        let radial;
-        if (roll < 0.40) {
-          radial = rand(0.76, 0.98);
-        } else if (roll < 0.78) {
-          radial = rand(0.42, 0.78);
+        const isSurface = Math.random() < SURFACE_RATIO;
+        let p;
+        if (isSurface) {
+          p = sampleHeart3DSurface();
         } else {
-          radial = rand(0.16, 0.58);
+          p = sampleHeart3DInner();
         }
 
-        // 收紧左右，强化顶部双瓣和底部尖角，让心形更明显
-        const sideFactor = Math.abs(edge.x) / 16;
-        const topFactor = Math.max(0, (-edge.y - 2) / 16);
-        const bottomFactor = Math.max(0, (edge.y + 6) / 12);
-        radial -= sideFactor * rand(0.03, 0.08);
-        radial += topFactor * rand(0.01, 0.05);
-        radial -= bottomFactor * rand(0.01, 0.05);
+        // 坐标已在采样函数中归一化
+        const nx = p.x, ny = p.y, nz = p.z;
+        const dist3 = Math.hypot(nx, ny, nz);
 
-        // 小幅表面起伏，避免破坏轮廓
-        if (radial > 0.80 && Math.random() < 0.18) {
-          radial += rand(0.01, 0.05);
-        }
-        radial = Math.max(0.22, Math.min(1.02, radial));
+        const isOuterShell = isSurface;
+        const isInnerLayer = !isSurface && (p.depth || 0) < 0.4;
+        const isMidBand    = !isOuterShell && !isInnerLayer;
 
-        const isOuterShell = radial > 0.74;
-        const isMidBand = radial > 0.36 && radial <= 0.74;
-        const isInnerLayer = radial <= 0.36;
-
-        if (radial < 0.12 && Math.random() < 0.04) continue;
-
-        const isBigShard = Math.random() < (isOuterShell ? 0.11 : (isMidBand ? 0.08 : 0.03));
-        const isTinyShard = !isBigShard && Math.random() < (isInnerLayer ? 0.24 : 0.12);
-
-        const jitterRange = isOuterShell ? 0.55 : (isMidBand ? 0.95 : 1.05);
-        const px = edge.x * radial + rand(-jitterRange, jitterRange);
-        const py = edge.y * radial + rand(-jitterRange, jitterRange);
+        const isBigShard  = Math.random() < (isOuterShell ? 0.08 : 0.03);
+        const isTinyShard = !isBigShard && Math.random() < (isInnerLayer ? 0.35 : 0.18);
 
         shards.push({
           seed: Math.random() * 1000,
-          angle: t,
-          baseX: px,
-          baseY: py,
-          depth: radial,
+          b3x: nx, b3y: ny, b3z: nz,
+          baseX: p.x, baseY: p.y,
+          depth: dist3,
+          isOuterShell, isInnerLayer,
           rot: rand(0, Math.PI * 2),
-          spin: rand(-0.012, 0.012),
+          spin: rand(-0.008, 0.008),
           size: isBigShard
-            ? (isOuterShell ? rand(7, 14) : rand(5.5, 10))
-            : (isTinyShard ? rand(1.3, 3.6) : (isOuterShell ? rand(3.2, 7.8) : (isMidBand ? rand(3.1, 6.9) : rand(2.6, 5.8)))),
-          stretch: isBigShard ? rand(0.95, 2.0) : rand(0.78, 1.55),
-          brightness: isOuterShell ? rand(0.86, 1.18) : (isMidBand ? rand(0.60, 1.00) : rand(0.40, 0.86)),
-          alpha: isOuterShell ? rand(0.38, 0.84) : (isMidBand ? rand(0.30, 0.60) : rand(0.20, 0.40)),
-          drift: rand(0.35, 1.1),
-          fragility: isOuterShell ? rand(0.45, 0.85) : rand(0.8, 1.6),
-          layerLift: isOuterShell ? rand(0.45, 1.0) : rand(0.2, 0.8),
-          isBigShard,
-          isTinyShard,
-          isInnerLayer,
-          x: cx,
-          y: cy,
-          vx: 0,
-          vy: 0,
+            ? rand(5, 9)
+            : (isTinyShard
+              ? rand(1.0, 2.5)
+              : (isOuterShell ? rand(2.8, 6.0) : rand(1.8, 4.2))),
+          stretch: isBigShard ? rand(1.0, 1.8) : rand(0.7, 1.45),
+          brightness: isOuterShell
+            ? rand(0.85, 1.18)
+            : (isMidBand ? rand(0.55, 0.92) : rand(0.30, 0.72)),
+          alpha: isOuterShell
+            ? rand(0.42, 0.90)
+            : (isMidBand ? rand(0.25, 0.55) : rand(0.15, 0.35)),
+          drift: rand(0.3, 1.0),
+          fragility: isOuterShell ? rand(0.35, 0.75) : rand(0.6, 1.4),
+          layerLift: rand(0.1, 0.8),
+          isBigShard, isTinyShard,
+          x: cx, y: cy, vx: 0, vy: 0,
+          projZ: 0, projScale: 1,
           flicker: rand(0.2, 1.2)
         });
       }
 
-      shards.sort((a, b) => a.angle - b.angle);
+      // 不再按角度排序（3D下无意义），保持随机顺序
+      // drawShards 里按 projZ 动态排序
 
+      // Glows：贴在表面外侧
       for (let i = 0; i < GLOW_COUNT; i++) {
-        const t = Math.random() * Math.PI * 2;
-        const edge = heartPoint(t, rand(1.02, 1.14));
+        const p = sampleHeart3DSurface();
+        const sc = rand(1.04, 1.18);
         glows.push({
           seed: Math.random() * 1000,
-          baseX: edge.x,
-          baseY: edge.y,
-          size: rand(10, 34),
-          alpha: rand(0.04, 0.18),
+          b3x: p.x * sc,
+          b3y: p.y * sc,
+          b3z: p.z * sc,
+          baseX: p.x * 16, baseY: p.y * 16,
+          size: rand(12, 38),
+          alpha: rand(0.04, 0.16),
           drift: rand(0.3, 1.0)
         });
       }
 
+      // Floaters：在表面外轨道漂浮
       for (let i = 0; i < FLOATER_COUNT; i++) {
-        const t = Math.random() * Math.PI * 2;
-        const edge = heartPoint(t, rand(1.05, 1.18));
-        const orbit = rand(1.02, 1.18);
+        const p = sampleHeart3DSurface();
+        const sc = rand(1.08, 1.25);
         floaters.push({
           seed: Math.random() * 1000,
-          baseX: edge.x * orbit,
-          baseY: edge.y * orbit,
+          b3x: p.x * sc,
+          b3y: p.y * sc,
+          b3z: p.z * sc,
+          baseX: p.x * 16 * sc, baseY: p.y * 16 * sc,
           rot: rand(0, Math.PI * 2),
           spin: rand(-0.01, 0.01),
-          size: rand(1.2, 4.8),
+          size: rand(1.5, 5.0),
           stretch: rand(0.8, 1.7),
-          alpha: rand(0.08, 0.22),
-          brightness: rand(0.65, 1.05),
+          alpha: rand(0.10, 0.26),
+          brightness: rand(0.68, 1.08),
           drift: rand(0.5, 1.3),
-          x: cx,
-          y: cy,
-          vx: 0,
-          vy: 0
+          x: cx, y: cy, vx: 0, vy: 0
         });
       }
 
@@ -431,21 +855,25 @@
           alpha: rand(0.10, 0.28),
           brightness: rand(0.72, 1.12),
           wobble: rand(0.6, 1.4),
-          x: 0,
-          y: 0,
+          x: 0, y: 0,
           rot: rand(-0.18, 0.18)
         });
       }
 
       for (let i = 0; i < AMBIENT_COUNT; i++) {
+        const edgeMode = Math.random() < 0.68;
+        const side = Math.floor(Math.random() * 4);
+        const x = edgeMode
+          ? (side % 2 === 0 ? rand(0, w * 0.18) : rand(w * 0.82, w))
+          : Math.random() * w;
+        const y = edgeMode
+          ? (side < 2 ? rand(0, h * 0.24) : rand(h * 0.76, h))
+          : Math.random() * h;
         ambientBits.push({
           seed: Math.random() * 1000,
-          x: Math.random() * w,
-          y: Math.random() * h,
-          size: rand(10, 28),
-          alpha: rand(0.03, 0.10),
-          drift: rand(0.12, 0.45),
-          stretch: rand(0.8, 1.8),
+          x, y,
+          size: edgeMode ? rand(16, 34) : rand(10, 26), alpha: edgeMode ? rand(0.04, 0.11) : rand(0.025, 0.07),
+          drift: rand(0.10, 0.38), stretch: rand(0.8, 1.9),
           rot: rand(0, Math.PI * 2)
         });
       }
@@ -453,19 +881,14 @@
       for (let i = 0; i < PETAL_COUNT; i++) {
         petals.push({
           seed: Math.random() * 1000,
-          x: Math.random() * w,
-          y: Math.random() * h,
-          size: rand(7, 16),
-          alpha: rand(0.04, 0.10),
-          driftX: rand(0.10, 0.32),
-          driftY: rand(0.28, 0.62),
-          rot: rand(0, Math.PI * 2),
-          spin: rand(-0.01, 0.01),
+          x: Math.random() * w, y: Math.random() * h,
+          size: rand(7, 16), alpha: rand(0.04, 0.10),
+          driftX: rand(0.10, 0.32), driftY: rand(0.28, 0.62),
+          rot: rand(0, Math.PI * 2), spin: rand(-0.01, 0.01),
           petal: Math.random() < 0.55
         });
       }
     }
-
     function colorForShard(b, a, depth = 0.5, angle = 0, isInnerLayer = false) {
       const hot = Math.min(1, Math.max(0, b));
       const angleMix = (Math.sin(angle) + 1) * 0.5;
@@ -480,47 +903,68 @@
       return `rgba(${r}, ${g}, ${blue}, ${innerFade})`;
     }
 
+    // ── 3D 透视投影 ──
+    // lx/ly/lz 已是屏幕像素尺度（scale3D = unit*0.30）
+    function project3D(lx, ly, lz) {
+      // 绕 Y 轴旋转 rotY（左右）
+      const cy2 = Math.cos(rotY), sy2 = Math.sin(rotY);
+      const x1 = lx * cy2 + lz * sy2;
+      const z1 = -lx * sy2 + lz * cy2;
+      // 绕 X 轴旋转 rotX（上下）
+      const cx2 = Math.cos(rotX), sx2 = Math.sin(rotX);
+      const y1 = ly * cx2 - z1 * sx2;
+      const z2 = ly * sx2 + z1 * cx2;
+      // 透视除法：焦距 = 2.2 * unit，近大远小效果明显
+      const fov = unit * 3.5;
+      const scale = fov / (fov + z2);
+      return { sx: cx + x1 * scale, sy: cy + y1 * scale, scale, z: z2 };
+    }
+
     function updateShard(s, pulse, dt) {
-      const breathing = 1 + 0.06 * pulse;
-      const wave = 1 + Math.sin(time * (0.9 + s.drift) + s.seed) * 0.028 * s.fragility;
+      const breathing = 1 + 0.045 * pulse;
+      // 挤出爱心：x∈[-1,1]，y∈[-0.84,0.46]，z∈[-0.28,0.28]
+      // 让心形宽度 = unit * 1.55（充满视口，有余量）
+      const scale3D = unit * 0.78 * breathing;
 
-      const depthCenter = s.isInnerLayer ? -10 : (s.depth > 0.72 ? 8 : 1.5);
-      const tx = cx + s.baseX * unit * 0.06 * breathing * wave;
-      const ty = cy + s.baseY * unit * 0.06 * breathing * wave - depthCenter * 0.18;
+      const lx = s.b3x * scale3D;
+      const ly = s.b3y * scale3D;
+      const lz = s.b3z * scale3D;
 
+      const proj = project3D(lx, ly, lz);
+      const tx = proj.sx;
+      const ty = proj.sy;
+
+      // 鼠标斥力
       const dxp = tx - pointer.x;
       const dyp = ty - pointer.y;
       const dist = Math.hypot(dxp, dyp);
-      let repelX = 0;
-      let repelY = 0;
+      let repelX = 0, repelY = 0;
       if (dist < pointer.radius) {
-        const p = (1 - dist / pointer.radius);
+        const p2 = (1 - dist / pointer.radius);
         const ang = Math.atan2(dyp, dxp);
-        repelX = Math.cos(ang) * p * 26;
-        repelY = Math.sin(ang) * p * 26;
+        repelX = Math.cos(ang) * p2 * 30;
+        repelY = Math.sin(ang) * p2 * 30;
       }
 
-      const innerNoiseX = Math.sin(time * (1.2 + s.drift) + s.seed * 0.7) * 1.6 * s.fragility;
-      const innerNoiseY = Math.cos(time * (1.1 + s.drift) + s.seed * 1.1) * 1.6 * s.fragility;
-
-      s.vx += ((tx + repelX + innerNoiseX) - s.x) * 0.055 * dt;
-      s.vy += ((ty + repelY + innerNoiseY) - s.y) * 0.055 * dt;
-      s.vx *= 0.88;
-      s.vy *= 0.88;
-      s.x += s.vx;
-      s.y += s.vy;
-      s.rot += s.spin * dt + Math.sin(time + s.seed) * 0.002;
+      s.vx += ((tx + repelX) - s.x) * 0.055 * dt;
+      s.vy += ((ty + repelY) - s.y) * 0.055 * dt;
+      s.vx *= 0.86; s.vy *= 0.86;
+      s.x += s.vx; s.y += s.vy;
+      s.projZ     = proj.z;
+      s.projScale = proj.scale;
+      s.rot += s.spin * dt;
     }
 
     function updateFloater(f, pulse, dt) {
-      const tx = cx + f.baseX * unit * 0.06 + Math.sin(time * (0.8 + f.drift) + f.seed) * 8;
-      const ty = cy + f.baseY * unit * 0.06 + Math.cos(time * (1.0 + f.drift) + f.seed) * 8;
-      f.vx += (tx - f.x) * 0.035 * dt;
-      f.vy += (ty - f.y) * 0.035 * dt;
-      f.vx *= 0.92;
-      f.vy *= 0.92;
-      f.x += f.vx;
-      f.y += f.vy;
+      const scale3D = unit * 0.78 * (1 + 0.04 * pulse);
+      const lx = f.b3x * scale3D + Math.sin(time * (0.8 + f.drift) + f.seed) * 7;
+      const ly = f.b3y * scale3D + Math.cos(time * (1.0 + f.drift) + f.seed) * 7;
+      const lz = f.b3z * scale3D;
+      const proj = project3D(lx, ly, lz);
+      f.vx += (proj.sx - f.x) * 0.035 * dt;
+      f.vy += (proj.sy - f.y) * 0.035 * dt;
+      f.vx *= 0.92; f.vy *= 0.92;
+      f.x += f.vx; f.y += f.vy;
       f.rot += f.spin * dt;
     }
 
@@ -563,6 +1007,41 @@
         ctx.arc(x, y, r, 0, Math.PI * 2);
         ctx.fill();
       }
+    }
+
+
+    function drawEdgeAura(pulse) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      const corners = [
+        [0.08 * w, 0.12 * h, Math.min(w, h) * 0.32],
+        [0.92 * w, 0.14 * h, Math.min(w, h) * 0.30],
+        [0.10 * w, 0.86 * h, Math.min(w, h) * 0.34],
+        [0.90 * w, 0.84 * h, Math.min(w, h) * 0.32]
+      ];
+      for (const [x, y, r] of corners) {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r * (1 + pulse * 0.06));
+        g.addColorStop(0, `rgba(255,96,132,${0.042 + pulse * 0.015})`);
+        g.addColorStop(0.35, `rgba(255,46,90,${0.020 + pulse * 0.010})`);
+        g.addColorStop(1, 'rgba(255,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const veilTop = ctx.createLinearGradient(0, 0, 0, h * 0.24);
+      veilTop.addColorStop(0, `rgba(255,95,128,${0.050 + pulse * 0.012})`);
+      veilTop.addColorStop(1, 'rgba(255,0,0,0)');
+      ctx.fillStyle = veilTop;
+      ctx.fillRect(0, 0, w, h * 0.24);
+
+      const veilBottom = ctx.createLinearGradient(0, h, 0, h * 0.72);
+      veilBottom.addColorStop(0, `rgba(255,86,122,${0.044 + pulse * 0.014})`);
+      veilBottom.addColorStop(1, 'rgba(255,0,0,0)');
+      ctx.fillStyle = veilBottom;
+      ctx.fillRect(0, h * 0.72, w, h * 0.28);
+      ctx.restore();
     }
 
     function drawHUD(pulse) {
@@ -617,12 +1096,57 @@
       ctx.restore();
     }
 
+
+
+    function drawOuterHalo(pulse) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+
+      const haloR = unit * 1.05 * (1 + 0.025 * pulse);
+      const hg = ctx.createRadialGradient(cx, cy - unit * 0.05, 0, cx, cy - unit * 0.05, haloR);
+      hg.addColorStop(0, 'rgba(255,0,0,0)');
+      hg.addColorStop(0.52, 'rgba(255,0,0,0)');
+      hg.addColorStop(0.70, `rgba(255,60,80,${0.04 + pulse * 0.015})`);
+      hg.addColorStop(0.85, `rgba(220,20,50,${0.07 + pulse * 0.02})`);
+      hg.addColorStop(0.94, 'rgba(180,10,30,0.04)');
+      hg.addColorStop(1, 'rgba(100,0,10,0)');
+      ctx.fillStyle = hg;
+      ctx.beginPath();
+      ctx.arc(cx, cy - unit * 0.05, haloR, 0, Math.PI * 2);
+      ctx.fill();
+
+      const textAlpha = 0.12 + pulse * 0.04;
+      ctx.font = `${Math.max(11, Math.floor(unit * 0.052))}px "STKaiti","KaiTi",cursive`;
+      ctx.fillStyle = 'rgba(255,200,215,0.9)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const sideX1 = cx - unit * 1.12;
+      const sideX2 = cx + unit * 1.12;
+      const leftPhrases = ['❤', '爱', '♡', '永恒', '♡', '恒', '❤'];
+      const rightPhrases = ['❤', '情', '♡', '恒永', '♡', '永', '❤'];
+
+      for (let i = 0; i < leftPhrases.length; i++) {
+        const yOff = (i - 3) * unit * 0.17;
+        const flicker = 0.6 + 0.4 * Math.sin(time * 0.9 + i * 1.3);
+        ctx.globalAlpha = textAlpha * flicker;
+        ctx.fillText(leftPhrases[i], sideX1, cy + yOff);
+        ctx.fillText(rightPhrases[i], sideX2, cy + yOff);
+      }
+
+      ctx.restore();
+    }
+
     function drawGlowShell(pulse) {
       ctx.save();
       ctx.globalCompositeOperation = 'source-over';
+      const scale3D = unit * 0.78 * (1 + 0.04 * pulse);
       for (const g of glows) {
-        const gx = cx + g.baseX * unit * 0.06 * (1 + pulse * 0.04) + Math.sin(time * (0.7 + g.drift) + g.seed) * 4;
-        const gy = cy + g.baseY * unit * 0.06 * (1 + pulse * 0.04) + Math.cos(time * (0.9 + g.drift) + g.seed) * 4;
+        const lx = g.b3x * scale3D + Math.sin(time * (0.7 + g.drift) + g.seed) * 4;
+        const ly = g.b3y * scale3D + Math.cos(time * (0.9 + g.drift) + g.seed) * 4;
+        const lz = g.b3z * scale3D;
+        const proj = project3D(lx, ly, lz);
+        const gx = proj.sx, gy = proj.sy;
         const radius = g.size * (1 + Math.sin(time * 1.6 + g.seed) * 0.12);
         const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, radius);
         grad.addColorStop(0, 'rgba(190,48,58,0.18)');
@@ -662,7 +1186,7 @@
     }
 
     function drawInnerNetwork(pulse) {
-      const inner = shards.filter(s => s.isInnerLayer || (s.depth > 0.30 && s.depth < 0.68));
+      const inner = shards.filter(s => s.depth < 0.65);
       const maxLink = 34 + pulse * 5;
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
@@ -943,60 +1467,47 @@
     }
 
     function drawCenterTitle() {
-      const dx = pointer.x - cx;
-      const dy = pointer.y - cy;
-      const inside = Math.pow(dx / (unit * 0.26), 2) + Math.pow((dy + unit * 0.02) / (unit * 0.20), 2) < 1;
-      const revealActive = inside || mobilePinnedReveal;
-      titleTarget = revealActive ? 1 : 0;
-      const easing = revealActive ? 0.075 : 0.045;
-      titleReveal += (titleTarget - titleReveal) * easing;
-      photoReveal += ((revealActive ? 1 : 0) - photoReveal) * 0.055;
-      if (titleReveal < 0.012 && photoReveal < 0.012) return;
+      const inside = isPointInCenterRevealZone(pointer.x, pointer.y);
+      titleReveal += ((inside ? 1 : 0) - titleReveal) * (inside ? 0.075 : 0.045);
+      if (titleReveal < 0.012) return;
 
-      const reveal = titleReveal * titleReveal * (3 - 2 * titleReveal);
-      const breathe = Math.sin(time * 1.6) * unit * 0.010 * Math.max(reveal, photoReveal);
-      const textY = cy + unit * 0.03 + breathe;
+      const reveal  = titleReveal * titleReveal * (3 - 2 * titleReveal);
+      const breathe = Math.sin(time * 1.6) * unit * 0.010 * reveal;
+      const textY   = cy + unit * 0.03 + breathe;
 
-      if (photoReveal > 0.02) {
-        drawHeartPhoto(photoReveal);
-        if (photoReady) {
-          drawCenterPhoto(photoReveal, textY);
-        }
-      }
-
-      if (reveal < 0.012) return;
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
 
+      // 中心光晕
       const coreGlow = ctx.createRadialGradient(cx, textY, 0, cx, textY, unit * (0.08 + reveal * 0.16));
-      coreGlow.addColorStop(0, `rgba(255, 244, 232, ${0.12 + reveal * 0.18})`);
+      coreGlow.addColorStop(0,  `rgba(255, 244, 232, ${0.12 + reveal * 0.18})`);
       coreGlow.addColorStop(0.24, `rgba(255, 196, 160, ${0.09 + reveal * 0.16})`);
-      coreGlow.addColorStop(1, 'rgba(255,0,0,0)');
+      coreGlow.addColorStop(1,  'rgba(255,0,0,0)');
       ctx.fillStyle = coreGlow;
       ctx.beginPath();
       ctx.arc(cx, textY, unit * (0.08 + reveal * 0.16), 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.textAlign = 'center';
+      // 文字
+      ctx.textAlign    = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = `${Math.max(26, Math.floor(unit * 0.18))}px "STKaiti", "KaiTi", "DFKai-SB", cursive`;
-      ctx.shadowColor = `rgba(255, 156, 120, ${0.34 * reveal})`;
-      ctx.shadowBlur = 20;
+      ctx.font         = `${Math.max(26, Math.floor(unit * 0.18))}px "STKaiti","KaiTi","DFKai-SB",cursive`;
+      ctx.shadowColor  = `rgba(255, 156, 120, ${0.34 * reveal})`;
+      ctx.shadowBlur   = 20;
       const grad = ctx.createLinearGradient(cx - unit * 0.22, textY - unit * 0.06, cx + unit * 0.22, textY + unit * 0.06);
-      grad.addColorStop(0, `rgba(255, 248, 238, ${0.98 * reveal})`);
+      grad.addColorStop(0,    `rgba(255, 248, 238, ${0.98 * reveal})`);
       grad.addColorStop(0.24, `rgba(255, 228, 200, ${0.99 * reveal})`);
       grad.addColorStop(0.56, `rgba(255, 198, 154, ${0.99 * reveal})`);
       grad.addColorStop(0.82, `rgba(244, 150, 112, ${0.98 * reveal})`);
-      grad.addColorStop(1, `rgba(255, 230, 214, ${0.96 * reveal})`);
+      grad.addColorStop(1,    `rgba(255, 230, 214, ${0.96 * reveal})`);
       ctx.fillStyle = grad;
       ctx.fillText('爱晓玲', cx, textY);
 
-      ctx.lineWidth = 0.9;
+      ctx.lineWidth   = 0.9;
       ctx.strokeStyle = `rgba(255, 252, 246, ${0.16 * reveal})`;
       ctx.strokeText('爱晓玲', cx, textY);
       ctx.restore();
     }
-
 
     function drawButterflyGlow(x, y, scale, angle, alpha) {
       ctx.save();
@@ -1058,281 +1569,33 @@
       ctx.restore();
     }
 
-    function drawHeartPhoto(reveal) {
-      const ease = reveal * reveal * (3 - 2 * reveal);
-      const heartScale = unit * 0.0735;
-      const boundsW = unit * 1.18;
-      const boundsH = unit * 1.14;
-
-      ctx.save();
-      ctx.translate(cx, cy + unit * 0.015);
-
-      // 只裁剪爱心范围，用来承载“非照片区域”的变化
-      ctx.beginPath();
-      for (let i = 0; i <= 220; i++) {
-        const t = (i / 220) * Math.PI * 2;
-        const hp = heartPoint(t, 1);
-        const x = hp.x * heartScale;
-        const y = hp.y * heartScale;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.clip();
-
-      // 爱心剩余区域的底色、柔雾和微光
-      const haze = ctx.createRadialGradient(0, 0, unit * 0.03, 0, 0, unit * 0.56);
-      haze.addColorStop(0, `rgba(255,255,255,${0.02 + ease * 0.02})`);
-      haze.addColorStop(0.34, `rgba(255,175,202,${0.05 + ease * 0.05})`);
-      haze.addColorStop(0.70, `rgba(156,18,64,${0.12 + ease * 0.07})`);
-      haze.addColorStop(1, `rgba(32,0,10,${0.18 + ease * 0.03})`);
-      ctx.fillStyle = haze;
-      ctx.fillRect(-boundsW * 1.4, -boundsH * 1.4, boundsW * 2.8, boundsH * 2.8);
-
-      ctx.save();
-      ctx.globalCompositeOperation = 'screen';
-      for (let i = 0; i < 14; i++) {
-        const angle = -Math.PI / 2 + (i / 14) * Math.PI * 2 + time * 0.07;
-        const radiusX = unit * (0.14 + (i % 4) * 0.020);
-        const radiusY = unit * (0.12 + (i % 3) * 0.018);
-        const px = Math.cos(angle) * radiusX;
-        const py = Math.sin(angle) * radiusY;
-        const petal = ctx.createRadialGradient(px, py, 0, px, py, unit * 0.095);
-        petal.addColorStop(0, `rgba(255,245,250,${0.06 + ease * 0.05})`);
-        petal.addColorStop(0.44, `rgba(255,170,206,${0.10 + ease * 0.08})`);
-        petal.addColorStop(1, 'rgba(255,120,176,0)');
-        ctx.fillStyle = petal;
-        ctx.beginPath();
-        ctx.ellipse(px, py, unit * 0.024, unit * 0.070, angle * 0.72, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-
-      ctx.save();
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2 + time * (0.10 + i * 0.004);
-        const rx = unit * (0.17 + (i % 3) * 0.028);
-        const ry = unit * (0.13 + (i % 2) * 0.026);
-        const bx = Math.cos(a) * rx;
-        const by = Math.sin(a) * ry;
-        const scale = unit * (0.020 + (i % 3) * 0.004);
-        const flap = Math.sin(time * 3.1 + i) * 0.18;
-        drawButterflyGlow(bx, by, scale, a * 0.45 + flap, 0.28 + ease * 0.34);
-      }
-      ctx.restore();
-
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < 28; i++) {
-        const angle = (i / 28) * Math.PI * 2 + time * 0.16;
-        const radius = unit * (0.12 + (i % 7) * 0.016);
-        const sx = Math.cos(angle) * radius;
-        const sy = Math.sin(angle) * radius;
-        const size = unit * (0.004 + (i % 3) * 0.002);
-        ctx.fillStyle = `rgba(255, ${230 + (i % 3) * 8}, ${238 + (i % 4) * 4}, ${0.12 + ease * 0.14})`;
-        ctx.beginPath();
-        ctx.arc(sx, sy, size, 0, Math.PI * 2);
-        ctx.fill();
-        if (i % 4 === 0) {
-          ctx.strokeStyle = `rgba(255,245,248,${0.12 + ease * 0.14})`;
-          ctx.lineWidth = Math.max(0.8, unit * 0.0025);
-          ctx.beginPath();
-          ctx.moveTo(sx - size * 2.8, sy);
-          ctx.lineTo(sx + size * 2.8, sy);
-          ctx.moveTo(sx, sy - size * 2.8);
-          ctx.lineTo(sx, sy + size * 2.8);
-          ctx.stroke();
-        }
-      }
-      ctx.restore();
-
-      // 中间留出位置给“弹出的照片”
-      ctx.globalCompositeOperation = 'destination-out';
-      const hollow = ctx.createRadialGradient(0, 0, 0, 0, 0, unit * 0.26);
-      hollow.addColorStop(0, 'rgba(255,255,255,1)');
-      hollow.addColorStop(0.64, 'rgba(255,255,255,0.86)');
-      hollow.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = hollow;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, unit * 0.19, unit * 0.155, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.globalCompositeOperation = 'source-over';
-      const veil = ctx.createRadialGradient(0, 0, 0, 0, 0, unit * 0.48);
-      veil.addColorStop(0, 'rgba(255,255,255,0)');
-      veil.addColorStop(0.54, `rgba(118,18,34,${0.02 + ease * 0.018})`);
-      veil.addColorStop(0.86, `rgba(54,4,18,${0.05 + ease * 0.02})`);
-      veil.addColorStop(1, `rgba(20,0,0,${0.06 - ease * 0.015})`);
-      ctx.fillStyle = veil;
-      ctx.fillRect(-boundsW * 1.35, -boundsH * 1.35, boundsW * 2.7, boundsH * 2.7);
-      ctx.restore();
-
-      ctx.save();
-      ctx.translate(cx, cy + unit * 0.015);
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = `rgba(255, 238, 242, ${ease * 0.15})`;
-      ctx.lineWidth = 1.05;
-      ctx.beginPath();
-      for (let i = 0; i <= 220; i++) {
-        const t = (i / 220) * Math.PI * 2;
-        const hp = heartPoint(t, 1);
-        const x = hp.x * heartScale;
-        const y = hp.y * heartScale;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    function drawCenterPhoto(reveal, centerY) {
-      const ease = reveal * reveal * (3 - 2 * reveal);
-      const px = cx;
-      const py = centerY - unit * 0.002;
-      const scale = 1.06 - ease * 0.03;
-      const alpha = 0.22 + ease * 0.68;
-      const hoverTiltX = ((pointer.x - cx) / (unit * 0.5)) * 2.6;
-      const hoverTiltY = ((pointer.y - cy) / (unit * 0.5)) * 1.8;
-
-      // 让中间照片本身就是明显的大心形
-      const popupHeartScale = unit * 0.064;
-      const areaW = unit * 1.32;
-      const areaH = unit * 1.12;
-
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.rotate((hoverTiltX * 0.007) * Math.PI / 180);
-      ctx.scale(scale, scale);
-
-      ctx.beginPath();
-      for (let i = 0; i <= 260; i++) {
-        const t = (i / 260) * Math.PI * 2;
-        const hp = heartPoint(t, 1);
-        const x = hp.x * popupHeartScale;
-        const y = hp.y * popupHeartScale;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.clip();
-
-      ctx.globalAlpha = alpha;
-      const imgRatio = revealPhoto.width / revealPhoto.height;
-      let drawW = areaW;
-      let drawH = areaH;
-      if (imgRatio > drawW / drawH) {
-        drawH = areaH;
-        drawW = drawH * imgRatio;
-      } else {
-        drawW = areaW;
-        drawH = drawW / imgRatio;
-      }
-
-      const coverScale = 1.34;
-      drawW *= coverScale;
-      drawH *= coverScale;
-
-      ctx.drawImage(
-        revealPhoto,
-        -drawW / 2 - hoverTiltX * 0.08,
-        -drawH / 2 - hoverTiltY * 0.08,
-        drawW,
-        drawH
-      );
-
-      // 强化心形内部高光
-      const shine = ctx.createRadialGradient(0, -unit * 0.12, 0, 0, 0, unit * 0.70);
-      shine.addColorStop(0, `rgba(255,255,255,${0.08 + ease * 0.10})`);
-      shine.addColorStop(0.38, `rgba(255,236,242,${0.05 + ease * 0.08})`);
-      shine.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = shine;
-      ctx.fillRect(-areaW * 1.4, -areaH * 1.4, areaW * 2.8, areaH * 2.8);
-
-      // 边缘压暗，让心形边界更清楚
-      const vignette = ctx.createRadialGradient(0, 0, 0, 0, 0, unit * 0.80);
-      vignette.addColorStop(0, 'rgba(255,255,255,0)');
-      vignette.addColorStop(0.60, 'rgba(110,18,28,0.03)');
-      vignette.addColorStop(1, 'rgba(20,0,0,0.18)');
-      ctx.fillStyle = vignette;
-      ctx.fillRect(-areaW * 1.4, -areaH * 1.4, areaW * 2.8, areaH * 2.8);
-
-      ctx.restore();
-
-      // 用心形描边和心形外发光，而不是圆形光晕
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.globalCompositeOperation = 'lighter';
-
-      ctx.strokeStyle = `rgba(255, 238, 242, ${ease * 0.30})`;
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      for (let i = 0; i <= 260; i++) {
-        const t = (i / 260) * Math.PI * 2;
-        const hp = heartPoint(t, 1);
-        const x = hp.x * popupHeartScale;
-        const y = hp.y * popupHeartScale;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-
-      ctx.strokeStyle = `rgba(255, 150, 176, ${ease * 0.16})`;
-      ctx.lineWidth = unit * 0.012;
-      ctx.beginPath();
-      for (let i = 0; i <= 260; i++) {
-        const t = (i / 260) * Math.PI * 2;
-        const hp = heartPoint(t, 1);
-        const x = hp.x * popupHeartScale * 1.02;
-        const y = hp.y * popupHeartScale * 1.02;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-
-      const heartGlow = ctx.createRadialGradient(0, 0, unit * 0.12, 0, 0, unit * 0.86);
-      heartGlow.addColorStop(0, 'rgba(255,160,180,0)');
-      heartGlow.addColorStop(0.46, `rgba(255,118,154,${ease * 0.06})`);
-      heartGlow.addColorStop(0.78, `rgba(255,98,140,${ease * 0.10})`);
-      heartGlow.addColorStop(1, 'rgba(255,98,140,0)');
-      ctx.fillStyle = heartGlow;
-      ctx.beginPath();
-      for (let i = 0; i <= 260; i++) {
-        const t = (i / 260) * Math.PI * 2;
-        const hp = heartPoint(t, 1);
-        const x = hp.x * popupHeartScale * 1.20;
-        const y = hp.y * popupHeartScale * 1.20;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.restore();
-    }
-
     function drawShards(pulse) {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
 
-      const ordered = shards;
+      // 不做每帧排序（太耗性能）
+      // 改用：背面粒子降低亮度+透明度来模拟深度感
+      for (const s of shards) {
+        const flicker = 0.80 + 0.20 * Math.sin(time * (1.7 + s.flicker) + s.seed);
 
-      for (const s of ordered) {
-        const flicker = 0.78 + 0.26 * Math.sin(time * (1.7 + s.flicker) + s.seed);
-        const alpha = s.alpha * flicker;
-        const perspective = s.isInnerLayer ? (0.92 + s.depth * 0.24) : (0.7 + s.depth * 0.58);
-        const size = s.size * perspective * (0.95 + 0.12 * Math.sin(time * 1.5 + s.seed));
-        const innerSink = s.isInnerLayer ? 0.6 + (0.36 - s.depth) * 6 : 0;
-        const liftY = (1 - s.depth) * 12 - s.layerLift * 5 + innerSink;
-        const px = s.x;
-        const py = s.y + liftY;
+        // projZ > 0 表示粒子在相机后方（背面）
+        const isBack  = (s.projZ || 0) > 0;
+        const backFade = isBack ? 0.45 : 1.0;
+        const alpha   = s.alpha * flicker * backFade;
 
-        if (alpha > 0.09) {
-          const glowScale = s.isBigShard ? 4.0 : (s.isTinyShard ? 1.9 : 3.0);
+        const ps   = Math.max(0.35, Math.min(2.0, s.projScale || 1));
+        const size = s.size * ps * (0.95 + 0.08 * Math.sin(time * 1.5 + s.seed));
+
+        const depthBright = s.brightness * (isBack ? 0.5 : 1.0);
+        const shardAlpha  = alpha * (s.isInnerLayer ? 0.80 : 1.0);
+        const angle3d     = Math.atan2(s.b3y || 0, s.b3x || 0);
+
+        const px = s.x, py = s.y;
+
+        if (shardAlpha > 0.07 && size > 0.5) {
+          const glowScale = s.isBigShard ? 3.6 : (s.isTinyShard ? 1.7 : 2.6);
           const glow = ctx.createRadialGradient(px, py, 0, px, py, size * glowScale);
-          glow.addColorStop(0, colorForShard(s.brightness + 0.18, alpha * (s.isInnerLayer ? 0.12 : 0.16), s.depth, s.angle, s.isInnerLayer));
+          glow.addColorStop(0, colorForShard(depthBright + 0.15, shardAlpha * 0.14, s.depth, angle3d, s.isInnerLayer));
           glow.addColorStop(1, 'rgba(60,0,10,0)');
           ctx.fillStyle = glow;
           ctx.beginPath();
@@ -1340,52 +1603,31 @@
           ctx.fill();
         }
 
-        const shardAlpha = s.isInnerLayer ? alpha * 0.92 : alpha;
-        drawTriangle(
-          px,
-          py,
-          size,
-          s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.08 : 0.14),
-          s.stretch,
-          colorForShard(s.brightness + pulse * 0.05 + s.depth * 0.04, shardAlpha, s.depth, s.angle, s.isInnerLayer)
-        );
-        drawGlassHighlight(
-          px,
-          py,
-          size,
-          s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.08 : 0.14),
-          s.stretch,
-          shardAlpha,
-          s.isBigShard
-        );
+        if (shardAlpha > 0.06 && size > 0.5) {
+          drawTriangle(px, py, size,
+            s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.07 : 0.12),
+            s.stretch,
+            colorForShard(depthBright + pulse * 0.04, shardAlpha, s.depth, angle3d, s.isInnerLayer)
+          );
+          drawGlassHighlight(px, py, size,
+            s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.07 : 0.12),
+            s.stretch, shardAlpha, s.isBigShard
+          );
 
-        if (shardAlpha > 0.12) {
-          ctx.save();
-          ctx.translate(px, py);
-          ctx.rotate(s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.08 : 0.14));
-          ctx.scale(s.stretch, 1);
-          ctx.strokeStyle = colorForShard(1.05, shardAlpha * (s.isBigShard ? 0.34 : 0.18), Math.min(1, s.depth + 0.08), s.angle, false);
-          ctx.lineWidth = s.isBigShard ? 0.95 : 0.45;
-          ctx.beginPath();
-          ctx.moveTo(0, -size);
-          ctx.lineTo(size * 0.88, size * 0.72);
-          ctx.lineTo(-size * 0.88, size * 0.72);
-          ctx.closePath();
-          ctx.stroke();
-
-          if (s.isBigShard || (!s.isTinyShard && Math.sin(s.seed * 3.1) > -0.1)) {
-            ctx.strokeStyle = colorForShard(1.15, shardAlpha * 0.18, Math.max(0.2, s.depth - 0.1), s.angle, true);
-            ctx.lineWidth = 0.35;
+          if (shardAlpha > 0.11) {
+            ctx.save();
+            ctx.translate(px, py);
+            ctx.rotate(s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.07 : 0.12));
+            ctx.scale(s.stretch, 1);
+            ctx.strokeStyle = colorForShard(1.05, shardAlpha * (s.isBigShard ? 0.28 : 0.14), Math.min(1, s.depth + 0.08), angle3d, false);
+            ctx.lineWidth = s.isBigShard ? 0.85 : 0.40;
             ctx.beginPath();
-            ctx.moveTo(0, -size * 0.72);
-            ctx.lineTo(size * 0.18, size * 0.08);
-            ctx.lineTo(-size * 0.24, size * 0.52);
-            ctx.stroke();
+            ctx.moveTo(0, -size); ctx.lineTo(size * 0.88, size * 0.72); ctx.lineTo(-size * 0.88, size * 0.72);
+            ctx.closePath(); ctx.stroke();
+            ctx.restore();
           }
-          ctx.restore();
         }
       }
-
       ctx.restore();
     }
 
@@ -1417,9 +1659,288 @@
 
 
     function isPointInCenterRevealZone(x, y) {
+      // 3D 下用屏幕中心圆形区域
       const dx = x - cx;
       const dy = y - cy;
-      return Math.pow(dx / (unit * 0.26), 2) + Math.pow((dy + unit * 0.02) / (unit * 0.20), 2) < 1;
+      return Math.hypot(dx, dy) < unit * 0.20;
+    }
+
+    // 判断是否点击在爱心边缘（可拖拽旋转区域）
+    function isPointOnHeartEdge(x, y) {
+      const dx0 = x - cx;
+      const dy0 = y - cy;
+      const cosR = Math.cos(-heartRotation);
+      const sinR = Math.sin(-heartRotation);
+      const lx = (dx0 * cosR - dy0 * sinR) / (unit * 0.06);
+      const ly = (dx0 * sinR + dy0 * cosR) / (unit * 0.06);
+      // 找最近的心形边界点，判断距离
+      let minDist = Infinity;
+      for (let i = 0; i < 80; i++) {
+        const t = (i / 80) * Math.PI * 2;
+        const hp = heartPoint(t, 1);
+        const d = Math.hypot(lx - hp.x, ly - hp.y);
+        if (d < minDist) minDist = d;
+      }
+      return minDist < 3.2; // 心形轮廓附近3单位宽度
+    }
+
+    function drawCrossStar(x, y, size, alpha) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = `rgba(255,245,250,${alpha})`;
+      ctx.lineWidth = Math.max(0.8, size * 0.12);
+      ctx.beginPath();
+      ctx.moveTo(-size, 0); ctx.lineTo(size, 0);
+      ctx.moveTo(0, -size); ctx.lineTo(0, size);
+      ctx.moveTo(-size * 0.72, -size * 0.72); ctx.lineTo(size * 0.72, size * 0.72);
+      ctx.moveTo(-size * 0.72, size * 0.72); ctx.lineTo(size * 0.72, -size * 0.72);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPetalShape(x, y, size, rotation, alpha) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      const grad = ctx.createLinearGradient(-size * 0.4, -size, size * 0.6, size);
+      grad.addColorStop(0, `rgba(255,246,250,${alpha * 0.95})`);
+      grad.addColorStop(0.45, `rgba(255,188,214,${alpha * 0.78})`);
+      grad.addColorStop(1, `rgba(255,110,160,${alpha * 0.06})`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, -size);
+      ctx.bezierCurveTo(size * 0.74, -size * 0.42, size * 0.68, size * 0.74, 0, size);
+      ctx.bezierCurveTo(-size * 0.68, size * 0.74, -size * 0.74, -size * 0.42, 0, -size);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ══ 绘制爱心内部世界（含照片展示）══
+    function drawInnerWorld() {
+      if (innerWorldReveal <= 0.001) return;
+      const ease = innerWorldReveal * innerWorldReveal * (3 - 2 * innerWorldReveal);
+      innerWorldTime += 0.012;
+
+      ctx.save();
+      ctx.globalAlpha = ease;
+
+      const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.88);
+      bg.addColorStop(0, 'rgba(62,0,36,1)');
+      bg.addColorStop(0.24, 'rgba(24,0,18,1)');
+      bg.addColorStop(0.62, 'rgba(6,0,8,1)');
+      bg.addColorStop(1, 'rgba(0,0,0,1)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.globalCompositeOperation = 'lighter';
+      for (const s of innerWorldStars) {
+        const sx = s.x * w;
+        const sy = s.y * h;
+        const tw = 0.5 + 0.5 * Math.sin(innerWorldTime * (s.big ? 2.8 : 2.0) + s.twinkle);
+        const a = s.alpha * tw * ease;
+        const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, s.size * (s.big ? 6 : 3));
+        grd.addColorStop(0, `rgba(255,235,242,${a})`);
+        grd.addColorStop(0.4, `rgba(255,168,210,${a * 0.38})`);
+        grd.addColorStop(1, 'rgba(255,80,120,0)');
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.arc(sx, sy, s.size * (s.big ? 6 : 3), 0, Math.PI * 2);
+        ctx.fill();
+        if (s.big) drawCrossStar(sx, sy, s.size * 3.2, a * 0.55);
+      }
+
+      for (const p of innerWorldParticles) {
+        p.angle += p.speed * (1 + p.depth * 0.55);
+        const baseR = Math.min(w, h) * 0.47 * p.radius;
+        const spiral = p.angle + p.arm * Math.PI;
+        const armTight = 0.38 + p.radius * 0.84;
+        const px2 = cx + Math.cos(spiral) * baseR * armTight;
+        const py2 = cy + Math.sin(spiral) * baseR * 0.48 * armTight + p.lift * Math.min(w, h);
+        const glow = ctx.createRadialGradient(px2, py2, 0, px2, py2, p.size * 5.4);
+        const hue = p.hue + innerWorldTime * 12;
+        const a = p.alpha * ease * (0.50 + 0.50 * Math.sin(innerWorldTime * 1.6 + p.seed));
+        glow.addColorStop(0, `hsla(${hue},100%,90%,${a})`);
+        glow.addColorStop(0.5, `hsla(${hue},92%,62%,${a * 0.34})`);
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(px2, py2, p.size * 5.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (const m of innerWorldMeteors) {
+        m.progress += m.speed;
+        if (m.progress > 1.18) {
+          m.progress = -Math.random() * 0.35;
+          m.y = 0.08 + Math.random() * 0.55;
+          m.len = 90 + Math.random() * 140;
+        }
+        const mx = (m.progress * 1.3 - 0.16) * w;
+        const my = m.y * h + Math.sin(innerWorldTime + m.seed) * 12;
+        const trail = ctx.createLinearGradient(mx - m.len, my - m.len * 0.28, mx, my);
+        trail.addColorStop(0, 'rgba(255,255,255,0)');
+        trail.addColorStop(0.4, `rgba(255,204,224,${m.alpha * 0.28 * ease})`);
+        trail.addColorStop(1, `rgba(255,252,255,${m.alpha * ease})`);
+        ctx.strokeStyle = trail;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(mx - m.len, my - m.len * 0.28);
+        ctx.lineTo(mx, my);
+        ctx.stroke();
+      }
+
+      const pulse2 = (Math.sin(innerWorldTime * 2.2) + 1) * 0.5;
+      const heartR = Math.min(w, h) * (0.19 + pulse2 * 0.025);
+      const hg = ctx.createRadialGradient(cx, cy, 0, cx, cy, heartR * 2.15);
+      hg.addColorStop(0, `rgba(255,170,200,${0.30 * ease})`);
+      hg.addColorStop(0.4, `rgba(200,30,70,${0.13 * ease})`);
+      hg.addColorStop(1, 'rgba(60,0,15,0)');
+      ctx.fillStyle = hg;
+      ctx.beginPath(); ctx.arc(cx, cy, heartR * 2.15, 0, Math.PI * 2); ctx.fill();
+
+      ctx.globalCompositeOperation = 'source-over';
+      const photoSize = heartR * 1.28;
+      const photoHS   = photoSize / 16;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      const hazeG = ctx.createRadialGradient(0, -photoSize * 0.08, 0, 0, 0, photoSize * 1.2);
+      hazeG.addColorStop(0, `rgba(255,200,230,${0.18 * ease})`);
+      hazeG.addColorStop(0.5, `rgba(180,20,60,${0.10 * ease})`);
+      hazeG.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = hazeG;
+      ctx.beginPath();
+      for (let i = 0; i <= 260; i++) {
+        const t = (i / 260) * Math.PI * 2;
+        const hp = heartPoint(t, 1);
+        i === 0 ? ctx.moveTo(hp.x * photoHS * 1.25, hp.y * photoHS * 1.25)
+                : ctx.lineTo(hp.x * photoHS * 1.25, hp.y * photoHS * 1.25);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+
+      if (innerPhotoReady) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.beginPath();
+        for (let i = 0; i <= 260; i++) {
+          const t = (i / 260) * Math.PI * 2;
+          const hp = heartPoint(t, 1);
+          i === 0 ? ctx.moveTo(hp.x * photoHS, hp.y * photoHS)
+                  : ctx.lineTo(hp.x * photoHS, hp.y * photoHS);
+        }
+        ctx.closePath(); ctx.clip();
+        const ir = innerPhoto.width / innerPhoto.height;
+        const bw = photoSize * 2.2, bh = photoSize * 2.0;
+        let dw, dh;
+        if (ir > bw / bh) { dh = bh; dw = dh * ir; }
+        else               { dw = bw; dh = dw / ir; }
+        ctx.globalAlpha = ease * 0.92;
+        ctx.drawImage(innerPhoto, -dw / 2, -dh / 2 - photoSize * 0.06, dw, dh);
+        ctx.globalAlpha = ease * 0.55;
+        ctx.globalCompositeOperation = 'lighter';
+        const shine = ctx.createRadialGradient(0, -photoSize * 0.22, 0, 0, 0, photoSize * 0.9);
+        shine.addColorStop(0, 'rgba(255,255,255,0.18)');
+        shine.addColorStop(0.5, 'rgba(255,180,210,0.08)');
+        shine.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = shine;
+        ctx.fillRect(-photoSize * 1.4, -photoSize * 1.4, photoSize * 2.8, photoSize * 2.8);
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.globalAlpha = ease * 0.45;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${Math.max(13, Math.floor(unit * 0.075))}px sans-serif`;
+        ctx.fillStyle = 'rgba(255,200,220,0.8)';
+        ctx.fillText('按 I 键上传照片', cx, cy - heartR * 0.1);
+        ctx.restore();
+      }
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = `rgba(255,220,235,${0.55 * ease})`;
+      ctx.lineWidth = 1.8 + pulse2 * 1.2;
+      ctx.shadowColor = 'rgba(255,80,130,0.9)';
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      for (let i = 0; i <= 260; i++) {
+        const t = (i / 260) * Math.PI * 2;
+        const hp = heartPoint(t, 1);
+        i === 0 ? ctx.moveTo(hp.x * photoHS, hp.y * photoHS)
+                : ctx.lineTo(hp.x * photoHS, hp.y * photoHS);
+      }
+      ctx.closePath(); ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (const item of innerWorldPoems) {
+        const r = heartR * (1.42 + item.radius);
+        const px = cx + Math.cos(item.angle + innerWorldTime * 0.16) * r;
+        const py = cy + Math.sin(item.angle + innerWorldTime * 0.16) * r * 0.62;
+        const alpha = item.alpha * (0.42 + 0.58 * Math.sin(innerWorldTime * 1.25 + item.phase)) * ease;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(Math.sin(innerWorldTime * 0.2 + item.phase) * 0.08);
+        ctx.font = `${Math.max(14, Math.floor(unit * 0.05))}px "STKaiti","KaiTi",cursive`;
+        ctx.fillStyle = `rgba(255,228,236,${alpha})`;
+        ctx.shadowColor = `rgba(255,132,176,${alpha * 0.9})`;
+        ctx.shadowBlur = 14;
+        ctx.fillText(item.text, 0, 0);
+        ctx.restore();
+      }
+
+      for (const p of innerWorldPetals) {
+        p.progress += p.speed;
+        if (p.progress > 1) p.progress -= 1;
+        p.rot += p.spin;
+        let sx, sy;
+        if (p.side === 0) { sx = -0.08 * w; sy = (0.12 + ((p.seed * 1.37) % 0.76)) * h; }
+        else if (p.side === 1) { sx = 1.08 * w; sy = (0.12 + ((p.seed * 1.11) % 0.76)) * h; }
+        else if (p.side === 2) { sx = (0.12 + ((p.seed * 1.61) % 0.76)) * w; sy = -0.08 * h; }
+        else { sx = (0.12 + ((p.seed * 1.83) % 0.76)) * w; sy = 1.08 * h; }
+        const t = p.progress;
+        const x = sx + (cx - sx) * t + Math.sin(innerWorldTime * 0.9 + p.drift) * 18;
+        const y = sy + (cy - sy) * t + Math.cos(innerWorldTime * 0.8 + p.drift) * 14;
+        drawPetalShape(x, y, p.size * (1 - t * 0.18), p.rot, p.alpha * ease * (1 - t * 0.35));
+      }
+
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = ease * (0.72 + 0.28 * Math.sin(innerWorldTime * 1.4));
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `${Math.max(18, Math.floor(unit * 0.115))}px "STKaiti","KaiTi","DFKai-SB",cursive`;
+      ctx.shadowColor = 'rgba(255,120,160,0.9)'; ctx.shadowBlur = 26;
+      const tg = ctx.createLinearGradient(cx - unit * 0.28, 0, cx + unit * 0.28, 0);
+      tg.addColorStop(0, 'rgba(255,248,238,0.97)');
+      tg.addColorStop(0.5, 'rgba(255,205,175,0.99)');
+      tg.addColorStop(1, 'rgba(255,240,220,0.97)');
+      ctx.fillStyle = tg;
+      ctx.fillText('爱 · 无 尽 头', cx, cy + heartR * 1.22);
+      ctx.shadowBlur = 0;
+
+      ctx.globalAlpha = ease * 0.48;
+      ctx.font = `${Math.max(11, Math.floor(unit * 0.058))}px sans-serif`;
+      ctx.fillStyle = 'rgba(255,200,220,0.75)';
+      ctx.fillText('点击退出  |  按 I 换照片', cx, cy + heartR * 1.58);
+
+      ctx.restore();
+    }
+    // 归位：平滑回到正面朝向
+    function triggerReturn() {
+      if (isReturning) return;
+      // 将 rotX/rotY 归一化到 [-π, π]
+      returnStartX = ((rotX + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+      returnStartY = ((rotY + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+      rotX = returnStartX;
+      rotY = returnStartY;
+      returnProgress = 0;
+      isReturning = true;
+      velX = 0; velY = 0;
     }
 
     function syncPointerFromTouch(touch) {
@@ -1435,11 +1956,40 @@
       const pulse = (Math.sin(time * 2.15) + 1) * 0.5;
       beatPhase = (time * 0.34) % 1;
 
+      // ── 3D 惯性旋转衰减 + 归位动画 ──
+      if (isReturning) {
+        returnProgress += 1 / RETURN_FRAMES;
+        if (returnProgress >= 1) {
+          returnProgress = 1;
+          isReturning = false;
+          rotX = 0; rotY = 0;
+          velX = 0; velY = 0;
+        } else {
+          // ease-out cubic
+          const e = 1 - Math.pow(1 - returnProgress, 3);
+          rotX = returnStartX * (1 - e);
+          rotY = returnStartY * (1 - e);
+        }
+      } else if (!isDraggingHeart) {
+        velX *= 0.955;
+        velY *= 0.955;
+        rotX += velX;
+        rotY += velY;
+      }
+      heartRotation = rotY;
+
+      // 更新内部世界过渡
+      const iwTarget = innerWorldActive ? 1 : 0;
+      innerWorldReveal += (iwTarget - innerWorldReveal) * 0.045;
+
       drawBackground(pulse);
+      drawEdgeAura(pulse);
+      updateReturnBtn();
       drawAmbientBits();
       drawPetals();
       drawDecorFrame();
       drawHUD(pulse);
+      drawOuterHalo(pulse);
       for (const s of shards) updateShard(s, pulse, dt);
       for (const f of floaters) updateFloater(f, pulse, dt);
       for (const s of streamers) updateStreamer(s);
@@ -1451,28 +2001,125 @@
       drawStreamers();
       drawCore(pulse);
       drawCenterTitle();
+      drawInnerWorld();
       requestAnimationFrame(frame);
     }
 
+    // 归位按钮
+    const returnBtn = document.getElementById('returnBtn');
+    returnBtn.addEventListener('click', () => { if (!innerWorldActive) triggerReturn(); });
+
+    // 旋转后显示归位按钮，归位完毕后隐藏
+    function updateReturnBtn() {
+      const hasRotation = Math.abs(rotX) > 0.08 || Math.abs(rotY) > 0.08;
+      const show = hasRotation && !isReturning && !innerWorldActive;
+      returnBtn.style.opacity = show ? '0.82' : '0';
+      returnBtn.style.pointerEvents = show ? 'auto' : 'none';
+    }
+
+    // 按 R 或 双击 归位
+    window.addEventListener('keydown', (e) => {
+      if ((e.key === 'r' || e.key === 'R') && !e.repeat && !innerWorldActive) {
+        e.preventDefault();
+        triggerReturn();
+      }
+    });
+    window.addEventListener('dblclick', (e) => {
+      if (!innerWorldActive && !isPointInCenterRevealZone(e.clientX, e.clientY)) {
+        triggerReturn();
+      }
+    });
+
     window.addEventListener('resize', resize);
+
+    // ─── 鼠标事件：拖拽旋转 + 指针光标 ───
     window.addEventListener('mousemove', (e) => {
       pointer.x = e.clientX;
       pointer.y = e.clientY;
+
+      if (isDraggingHeart) {
+        dragDX = e.clientX - dragPrevX;
+        dragDY = e.clientY - dragPrevY;
+        const sensitivity = 0.007;
+        rotY += dragDX * sensitivity;
+        rotX += dragDY * sensitivity;
+        // 限制 X 轴翻转范围，防止上下颠倒超过 ±85°
+        rotX = Math.max(-Math.PI * 0.47, Math.min(Math.PI * 0.47, rotX));
+        velY = dragDX * sensitivity;
+        velX = dragDY * sensitivity;
+        dragPrevX = e.clientX;
+        dragPrevY = e.clientY;
+      } else {
+        if (isPointInCenterRevealZone(e.clientX, e.clientY)) {
+          canvas.style.cursor = 'pointer';
+        } else {
+          canvas.style.cursor = 'grab';
+        }
+      }
     });
+
+    window.addEventListener('mousedown', (e) => {
+      if (innerWorldActive) return;
+      if (e.button !== 0) return;
+      isReturning = false;          // 拖拽打断归位
+      isDraggingHeart = true;
+      dragPrevX = e.clientX;
+      dragPrevY = e.clientY;
+      dragDX = 0; dragDY = 0;
+      velX = 0; velY = 0;
+      canvas.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (isDraggingHeart) {
+        isDraggingHeart = false;
+        // 松手时保留最后一帧的角速度，形成惯性
+        canvas.style.cursor = isPointInCenterRevealZone(e.clientX, e.clientY) ? 'pointer' : 'grab';
+      }
+    });
+
     window.addEventListener('mouseleave', () => {
+      isDraggingHeart = false;
       pointer.x = -9999;
       pointer.y = -9999;
     });
+
+    // 鼠标点击：中部进入内部世界
+    window.addEventListener('click', (e) => {
+      if (isDraggingHeart) return;
+      if (innerWorldActive) {
+        innerWorldActive = false;
+        return;
+      }
+      if (isPointInCenterRevealZone(e.clientX, e.clientY)) {
+        innerWorldActive = true;
+      }
+    });
+
+    // ─── 触屏事件 ───
+    let touchDragActive = false;
+
     window.addEventListener('touchstart', (e) => {
       const t = e.touches[0];
       if (!t) return;
       syncPointerFromTouch(t);
 
+      if (innerWorldActive) {
+        // 内部世界中：点击退出
+        innerWorldActive = false;
+        return;
+      }
+
       if (isPointInCenterRevealZone(t.clientX, t.clientY)) {
-        mobilePinnedReveal = !mobilePinnedReveal;
-      } else if (!mobilePinnedReveal) {
-        pointer.x = -9999;
-        pointer.y = -9999;
+        innerWorldActive = true;
+      } else {
+        touchDragActive = true;
+        isReturning = false;
+        dragPrevX = t.clientX;
+        dragPrevY = t.clientY;
+        dragDX = 0; dragDY = 0;
+        velX = 0; velY = 0;
       }
     }, { passive: true });
 
@@ -1480,23 +2127,39 @@
       const t = e.touches[0];
       if (!t) return;
       syncPointerFromTouch(t);
+
+      if (touchDragActive) {
+        const sensitivity = 0.007;
+        const dx2 = t.clientX - dragPrevX;
+        const dy2 = t.clientY - dragPrevY;
+        rotY += dx2 * sensitivity;
+        rotX += dy2 * sensitivity;
+        rotX = Math.max(-Math.PI * 0.47, Math.min(Math.PI * 0.47, rotX));
+        velY = dx2 * sensitivity;
+        velX = dy2 * sensitivity;
+        dragPrevX = t.clientX;
+        dragPrevY = t.clientY;
+      }
     }, { passive: true });
 
     window.addEventListener('touchend', () => {
-      if (!mobilePinnedReveal) {
-        pointer.x = -9999;
-        pointer.y = -9999;
-      }
+      touchDragActive = false;
+      pointer.x = -9999;
+      pointer.y = -9999;
     });
 
     window.addEventListener('touchcancel', () => {
-      if (!mobilePinnedReveal) {
-        pointer.x = -9999;
-        pointer.y = -9999;
-      }
+      touchDragActive = false;
+      pointer.x = -9999;
+      pointer.y = -9999;
     });
 
     resize();
+    // 提示文字自动消失
+    setTimeout(() => {
+      const hint = document.getElementById('dragHint');
+      if (hint) hint.style.opacity = '0';
+    }, 4200);
     for (const s of shards) {
       s.x = cx + rand(-12, 12);
       s.y = cy + rand(-12, 12);
