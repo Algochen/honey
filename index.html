@@ -353,6 +353,47 @@
     let heartRotation = 0;
     let heartAngularVelocity = 0;
 
+    // ══ 相机飞入 + 内部模式 ══
+    let camZ = 0;                  // 0=外部, >1=爱心内部（camZ=2.5时相机完全在内部中心）
+    const CAM_TARGET = 2.8;        // 足够大：确保相机真正穿入爱心体积内部
+    let insideActive = false;      // 是否身处内部
+    let insRotX = 0, insRotY = 0;  // 内部视角旋转
+    let insVelX = 0, insVelY = 0;
+    let isDraggingInside = false;
+    let zoomPhase = 'idle';        // 'idle' | 'flying_in' | 'inside'
+    let zoomProgress = 0;
+    const ZOOM_FRAMES = 200;       // ~3.3秒
+
+    // ── 内部视角缩放（FOV控制） ──
+    // insFov: 值越小=视角越窄=碎片越少越大；值越大=视角越宽=碎片越密越多
+    let insFov = 2.0;              // 默认内部FOV倍数（相对unit）
+    const INS_FOV_MIN = 0.6;       // 最小（碎片少，视角窄）
+    const INS_FOV_MAX = 5.5;       // 最大（碎片密，视角宽）
+    let insFovTarget = 2.0;        // 目标值（平滑插值）
+    // 缩放UI显示定时器
+    let fovHintTimer = 0;
+
+    // ══ 媒体端口配置 ★ 修改这里的路径 ★ ══
+    const MEDIA_PORTALS = [
+      { type:'photo', src:'./回忆1.jpg', label:'回忆·一' },
+      { type:'photo', src:'./回忆2.jpg', label:'回忆·二' },
+      { type:'photo', src:'./回忆3.jpg', label:'回忆·三' },
+      { type:'photo', src:'./回忆4.jpg', label:'回忆·四' },
+      { type:'photo', src:'./回忆5.jpg', label:'回忆·五' },
+      { type:'video', src:'./回忆6.mp4', label:'时光·一' },
+      { type:'video', src:'./回忆7.mp4', label:'时光·二' },
+      { type:'video', src:'./回忆8.mp4', label:'时光·三' },
+      { type:'video', src:'./回忆9.mp4', label:'时光·四' },
+      { type:'video', src:'./回忆10.mp4', label:'时光·五' },
+    ];
+    // 媒体世界状态
+    let mediaWorldActive = false;
+    let mediaWorldReveal = 0;
+    let mediaWorldTime = 0;
+    let currentPortal = null;
+    let mediaImg = null, mediaImgReady = false, mediaVideo = null;
+    let mwParticles=[], mwStars=[], mwMeteors=[], mwPetals=[], mwPoems=[];
+
     // ── 内部世界照片 ──
     const innerPhoto = new Image();
     let innerPhotoReady = false;
@@ -750,6 +791,33 @@
       ambientBits.length = 0;
       petals.length = 0;
 
+      // ── 端口碎片：10个发光入口，散布在爱心内部体积 ──
+      const GA = Math.PI * (3 - Math.sqrt(5)); // 黄金角
+      for (let i = 0; i < MEDIA_PORTALS.length; i++) {
+        let px=0, py=0, pz=0;
+        const tgt = i * GA;
+        for (let a=0; a<500; a++) {
+          const nx=rand(-0.80,0.80), ny=rand(-0.68,0.28);
+          if (!insideHeart2DFast(nx,ny)) continue;
+          const da = Math.atan2(ny+0.18, nx);
+          const diff = Math.abs(((da-tgt)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI);
+          if (diff < Math.PI*0.60) { px=nx; py=ny; pz=rand(-Z_THICK*0.60,Z_THICK*0.60); break; }
+        }
+        if (px===0&&py===0) { px=Math.cos(tgt)*0.35; py=Math.sin(tgt)*0.22; if(!insideHeart2DFast(px,py)){px=0.1;py=-0.1;} pz=0; }
+        shards.push({
+          seed:Math.random()*1000, b3x:px, b3y:py, b3z:pz,
+          baseX:px, baseY:py, depth:Math.hypot(px,py,pz),
+          isOuterShell:false, isInnerLayer:true,
+          rot:rand(0,Math.PI*2), spin:rand(-0.006,0.006),
+          size:rand(8,13), stretch:rand(1.0,1.5),
+          brightness:1.4, alpha:1.0, drift:rand(0.2,0.7),
+          isBigShard:true, isTinyShard:false,
+          x:cx||400, y:cy||300, vx:0, vy:0, projZ:0, projScale:1,
+          flicker:rand(0.05,0.3),
+          isPortal:true, portalIdx:i, portalHovered:false, glowPhase:rand(0,Math.PI*2),
+        });
+      }
+
       // ══ 参数化 3D 爱心表面 + 内部体积粒子 ══
       // 坐标已归一化到 [-1,1]（在 sampleHeart3DSurface/Inner 内完成）
       const SURFACE_RATIO = 0.68; // 68%表面，32%内部体积
@@ -800,7 +868,8 @@
           isBigShard, isTinyShard,
           x: cx, y: cy, vx: 0, vy: 0,
           projZ: 0, projScale: 1,
-          flicker: rand(0.2, 1.2)
+          flicker: rand(0.2, 1.2),
+          isPortal: false,
         });
       }
 
@@ -906,24 +975,30 @@
     // ── 3D 透视投影 ──
     // lx/ly/lz 已是屏幕像素尺度（scale3D = unit*0.30）
     function project3D(lx, ly, lz) {
-      // 绕 Y 轴旋转 rotY（左右）
-      const cy2 = Math.cos(rotY), sy2 = Math.sin(rotY);
+      // 内部模式用 insRotX/insRotY，外部用 rotX/rotY
+      const useRX = insideActive ? insRotX : rotX;
+      const useRY = insideActive ? insRotY : rotY;
+      const cy2 = Math.cos(useRY), sy2 = Math.sin(useRY);
       const x1 = lx * cy2 + lz * sy2;
       const z1 = -lx * sy2 + lz * cy2;
-      // 绕 X 轴旋转 rotX（上下）
-      const cx2 = Math.cos(rotX), sx2 = Math.sin(rotX);
+      const cx2 = Math.cos(useRX), sx2 = Math.sin(useRX);
       const y1 = ly * cx2 - z1 * sx2;
       const z2 = ly * sx2 + z1 * cx2;
-      // 透视除法：焦距 = 2.2 * unit，近大远小效果明显
-      const fov = unit * 3.5;
-      const scale = fov / (fov + z2);
-      return { sx: cx + x1 * scale, sy: cy + y1 * scale, scale, z: z2 };
+      // camZ 推进：camZ=0外部，camZ=CAM_TARGET时相机在爱心内部中心
+      // scale3D = unit*0.78，爱心归一化半径≈1，所以 camShift=camZ*unit*0.78 把相机推入
+      const camShift = camZ * unit * 0.78;
+      const z2s = z2 - camShift;
+      // 内部模式使用 insFov（用户可调），外部固定 3.5
+      const fov = insideActive ? insFov * unit : unit * 3.5;
+      const denom = fov + z2s;
+      // 太近的碎片（在相机后面或贴近相机）裁掉
+      if (denom < 0.5) return { sx: -99999, sy: -99999, scale: 0, z: z2s };
+      const scale = fov / denom;
+      return { sx: cx + x1 * scale, sy: cy + y1 * scale, scale, z: z2s };
     }
 
     function updateShard(s, pulse, dt) {
       const breathing = 1 + 0.045 * pulse;
-      // 挤出爱心：x∈[-1,1]，y∈[-0.84,0.46]，z∈[-0.28,0.28]
-      // 让心形宽度 = unit * 1.55（充满视口，有余量）
       const scale3D = unit * 0.78 * breathing;
 
       const lx = s.b3x * scale3D;
@@ -934,20 +1009,27 @@
       const tx = proj.sx;
       const ty = proj.sy;
 
-      // 鼠标斥力
-      const dxp = tx - pointer.x;
-      const dyp = ty - pointer.y;
-      const dist = Math.hypot(dxp, dyp);
-      let repelX = 0, repelY = 0;
-      if (dist < pointer.radius) {
-        const p2 = (1 - dist / pointer.radius);
-        const ang = Math.atan2(dyp, dxp);
-        repelX = Math.cos(ang) * p2 * 30;
-        repelY = Math.sin(ang) * p2 * 30;
+      if (insideActive) {
+        // 内部模式：无鼠标斥力，碎片直接跟随搏动目标
+        // breathing 已经驱动 scale3D，碎片位置随脉冲自然胀缩，产生呼吸感
+        s.vx += (tx - s.x) * 0.060 * dt;
+        s.vy += (ty - s.y) * 0.060 * dt;
+      } else {
+        // 外部模式：保留鼠标斥力
+        const dxp = tx - pointer.x;
+        const dyp = ty - pointer.y;
+        const dist = Math.hypot(dxp, dyp);
+        let repelX = 0, repelY = 0;
+        if (dist < pointer.radius) {
+          const p2 = (1 - dist / pointer.radius);
+          const ang = Math.atan2(dyp, dxp);
+          repelX = Math.cos(ang) * p2 * 30;
+          repelY = Math.sin(ang) * p2 * 30;
+        }
+        s.vx += ((tx + repelX) - s.x) * 0.055 * dt;
+        s.vy += ((ty + repelY) - s.y) * 0.055 * dt;
       }
 
-      s.vx += ((tx + repelX) - s.x) * 0.055 * dt;
-      s.vy += ((ty + repelY) - s.y) * 0.055 * dt;
       s.vx *= 0.86; s.vy *= 0.86;
       s.x += s.vx; s.y += s.vy;
       s.projZ     = proj.z;
@@ -1572,59 +1654,133 @@
     function drawShards(pulse) {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
+      const isInside = insideActive;
 
-      // 不做每帧排序（太耗性能）
-      // 改用：背面粒子降低亮度+透明度来模拟深度感
       for (const s of shards) {
         const flicker = 0.80 + 0.20 * Math.sin(time * (1.7 + s.flicker) + s.seed);
-
-        // projZ > 0 表示粒子在相机后方（背面）
         const isBack  = (s.projZ || 0) > 0;
-        const backFade = isBack ? 0.45 : 1.0;
+        const backFade = isBack ? (isInside ? 0.82 : 0.45) : 1.0;
         const alpha   = s.alpha * flicker * backFade;
-
-        const ps   = Math.max(0.35, Math.min(2.0, s.projScale || 1));
+        // 内部时允许更大的scale（近处碎片放大，制造包围感）
+        const maxScale = isInside ? 6.0 : 2.0;
+        const ps   = Math.max(0.35, Math.min(maxScale, s.projScale || 1));
         const size = s.size * ps * (0.95 + 0.08 * Math.sin(time * 1.5 + s.seed));
-
-        const depthBright = s.brightness * (isBack ? 0.5 : 1.0);
+        const depthBright = s.brightness * (isBack ? (isInside ? 0.75 : 0.5) : 1.0);
         const shardAlpha  = alpha * (s.isInnerLayer ? 0.80 : 1.0);
         const angle3d     = Math.atan2(s.b3y || 0, s.b3x || 0);
-
         const px = s.x, py = s.y;
 
+        // ── 端口碎片：外部显示小光晕，内部显示完整发光 ──
+        if (s.isPortal) {
+          if (size < 0.5 || shardAlpha < 0.03) continue;
+          const portal = MEDIA_PORTALS[s.portalIdx];
+          const isPhoto = portal.type === 'photo';
+          const gI = 0.60 + 0.40 * Math.sin(mediaWorldTime * 2.8 + s.glowPhase);
+          const hov = s.portalHovered;
+
+          if (!isInside) {
+            // ── 外部：明亮的彩色发光碎片，金色=照片，蓝色=视频 ──
+            const outerGlow = size * 7.5;
+            const og = ctx.createRadialGradient(px,py,0,px,py,outerGlow);
+            if (isPhoto) {
+              og.addColorStop(0, `rgba(255,230,80,${0.82*gI})`);
+              og.addColorStop(0.3, `rgba(255,160,20,${0.45*gI})`);
+              og.addColorStop(0.7, `rgba(255,80,0,${0.15*gI})`);
+              og.addColorStop(1, 'rgba(200,40,0,0)');
+            } else {
+              og.addColorStop(0, `rgba(80,220,255,${0.82*gI})`);
+              og.addColorStop(0.3, `rgba(30,140,255,${0.45*gI})`);
+              og.addColorStop(0.7, `rgba(0,60,220,${0.15*gI})`);
+              og.addColorStop(1, 'rgba(0,20,180,0)');
+            }
+            ctx.fillStyle=og; ctx.beginPath(); ctx.arc(px,py,outerGlow,0,Math.PI*2); ctx.fill();
+
+            // 碎片本体：鲜艳彩色，比普通碎片更亮
+            ctx.globalCompositeOperation='source-over';
+            ctx.save(); ctx.translate(px,py); ctx.rotate(s.rot); ctx.scale(s.stretch,1);
+            ctx.fillStyle = isPhoto
+              ? `rgba(255,${Math.floor(210+gI*45)},${Math.floor(40+gI*30)},${Math.min(1,shardAlpha*1.4)})`
+              : `rgba(${Math.floor(40+gI*30)},${Math.floor(160+gI*80)},255,${Math.min(1,shardAlpha*1.4)})`;
+            ctx.beginPath(); ctx.moveTo(0,-size); ctx.lineTo(size*0.88,size*0.72); ctx.lineTo(-size*0.88,size*0.72); ctx.closePath(); ctx.fill();
+            // 玻璃高光
+            ctx.beginPath(); ctx.moveTo(0,-size); ctx.lineTo(size*0.88,size*0.72); ctx.lineTo(-size*0.88,size*0.72); ctx.closePath(); ctx.clip();
+            const ohl=ctx.createLinearGradient(-size*0.6,-size,size*0.4,size*0.5);
+            ohl.addColorStop(0,`rgba(255,255,255,${0.60*gI})`); ohl.addColorStop(0.5,`rgba(255,255,255,${0.18*gI})`); ohl.addColorStop(1,'rgba(255,255,255,0)');
+            ctx.fillStyle=ohl; ctx.fillRect(-size*1.2,-size*1.2,size*2.4,size*2.4);
+            ctx.restore();
+
+            // 十字星光（让金色碎片更闪耀）
+            if (isPhoto && gI > 0.7) {
+              const starSize = size * (1.2 + gI * 0.8);
+              ctx.save(); ctx.globalCompositeOperation='lighter';
+              ctx.strokeStyle=`rgba(255,240,120,${(gI-0.6)*0.7})`;
+              ctx.lineWidth=Math.max(0.6, size*0.18);
+              ctx.beginPath();
+              ctx.moveTo(px-starSize,py); ctx.lineTo(px+starSize,py);
+              ctx.moveTo(px,py-starSize); ctx.lineTo(px,py+starSize);
+              ctx.moveTo(px-starSize*0.6,py-starSize*0.6); ctx.lineTo(px+starSize*0.6,py+starSize*0.6);
+              ctx.moveTo(px-starSize*0.6,py+starSize*0.6); ctx.lineTo(px+starSize*0.6,py-starSize*0.6);
+              ctx.stroke(); ctx.restore();
+            }
+
+            ctx.globalCompositeOperation='lighter';
+            continue;
+          }
+
+          // ── 内部：完整发光渲染 ──
+          const gr = size * (hov ? 7.5 : 5.5);
+          const gg = ctx.createRadialGradient(px,py,0,px,py,gr);
+          if (isPhoto) { gg.addColorStop(0,`rgba(255,220,70,${gI*(hov?0.70:0.42)})`); gg.addColorStop(0.5,`rgba(255,130,10,${gI*0.22})`); gg.addColorStop(1,'rgba(180,40,0,0)'); }
+          else         { gg.addColorStop(0,`rgba(70,200,255,${gI*(hov?0.70:0.42)})`); gg.addColorStop(0.5,`rgba(20,110,255,${gI*0.22})`); gg.addColorStop(1,'rgba(0,10,160,0)'); }
+          ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(px,py,gr,0,Math.PI*2); ctx.fill();
+          // 碎片本体
+          ctx.globalCompositeOperation='source-over';
+          ctx.save(); ctx.translate(px,py); ctx.rotate(s.rot); ctx.scale(1.25,1);
+          ctx.fillStyle = isPhoto ? `rgba(255,${Math.floor(190+gI*65)},${Math.floor(50+gI*35)},${0.94*gI})` : `rgba(${Math.floor(40+gI*35)},${Math.floor(165+gI*75)},255,${0.94*gI})`;
+          ctx.beginPath(); ctx.moveTo(0,-size); ctx.lineTo(size*0.88,size*0.72); ctx.lineTo(-size*0.88,size*0.72); ctx.closePath(); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(0,-size); ctx.lineTo(size*0.88,size*0.72); ctx.lineTo(-size*0.88,size*0.72); ctx.closePath(); ctx.clip();
+          const hl=ctx.createLinearGradient(-size*0.7,-size,size*0.5,size*0.5); hl.addColorStop(0,`rgba(255,255,255,${0.55*gI})`); hl.addColorStop(0.45,`rgba(255,255,255,${0.14*gI})`); hl.addColorStop(1,'rgba(255,255,255,0)');
+          ctx.fillStyle=hl; ctx.fillRect(-size*1.2,-size*1.2,size*2.4,size*2.4); ctx.restore();
+          // 图标
+          ctx.save(); ctx.translate(px,py); ctx.globalCompositeOperation='source-over';
+          ctx.font=`${Math.max(10,size*0.58)}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.globalAlpha=gI*(hov?1.0:0.88); ctx.fillText(isPhoto?'📷':'🎬',0,-size*0.1); ctx.restore();
+          // 标签
+          if (hov || ps > 0.65) {
+            ctx.save(); ctx.globalCompositeOperation='source-over'; ctx.translate(px,py+size*1.45);
+            ctx.font=`${Math.max(9,size*0.40)}px "STKaiti","KaiTi",cursive`; ctx.textAlign='center'; ctx.textBaseline='top';
+            ctx.fillStyle=isPhoto?'rgba(255,235,100,0.96)':'rgba(100,220,255,0.96)';
+            ctx.shadowColor=isPhoto?'rgba(255,160,0,0.9)':'rgba(40,160,255,0.9)'; ctx.shadowBlur=14;
+            ctx.globalAlpha=gI; ctx.fillText(portal.label,0,0); ctx.restore();
+          }
+          // 脉冲环
+          if (hov) {
+            const pr=size*(3.0+Math.sin(mediaWorldTime*5+s.glowPhase)*0.8);
+            ctx.save(); ctx.globalCompositeOperation='lighter';
+            ctx.strokeStyle=isPhoto?`rgba(255,210,60,${0.75*gI})`:`rgba(80,210,255,${0.75*gI})`;
+            ctx.lineWidth=2.2; ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2); ctx.stroke(); ctx.restore();
+          }
+          ctx.globalCompositeOperation='lighter';
+          continue;
+        }
+
+        // ── 普通碎片 ──
         if (shardAlpha > 0.07 && size > 0.5) {
           const glowScale = s.isBigShard ? 3.6 : (s.isTinyShard ? 1.7 : 2.6);
           const glow = ctx.createRadialGradient(px, py, 0, px, py, size * glowScale);
           glow.addColorStop(0, colorForShard(depthBright + 0.15, shardAlpha * 0.14, s.depth, angle3d, s.isInnerLayer));
           glow.addColorStop(1, 'rgba(60,0,10,0)');
           ctx.fillStyle = glow;
-          ctx.beginPath();
-          ctx.arc(px, py, size * glowScale, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(px, py, size * glowScale, 0, Math.PI * 2); ctx.fill();
         }
-
         if (shardAlpha > 0.06 && size > 0.5) {
-          drawTriangle(px, py, size,
-            s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.07 : 0.12),
-            s.stretch,
-            colorForShard(depthBright + pulse * 0.04, shardAlpha, s.depth, angle3d, s.isInnerLayer)
-          );
-          drawGlassHighlight(px, py, size,
-            s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.07 : 0.12),
-            s.stretch, shardAlpha, s.isBigShard
-          );
-
+          drawTriangle(px, py, size, s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.07 : 0.12), s.stretch, colorForShard(depthBright + pulse * 0.04, shardAlpha, s.depth, angle3d, s.isInnerLayer));
+          drawGlassHighlight(px, py, size, s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.07 : 0.12), s.stretch, shardAlpha, s.isBigShard);
           if (shardAlpha > 0.11) {
-            ctx.save();
-            ctx.translate(px, py);
-            ctx.rotate(s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.07 : 0.12));
-            ctx.scale(s.stretch, 1);
+            ctx.save(); ctx.translate(px, py); ctx.rotate(s.rot + Math.sin(time * 0.9 + s.seed) * (s.isBigShard ? 0.07 : 0.12)); ctx.scale(s.stretch, 1);
             ctx.strokeStyle = colorForShard(1.05, shardAlpha * (s.isBigShard ? 0.28 : 0.14), Math.min(1, s.depth + 0.08), angle3d, false);
             ctx.lineWidth = s.isBigShard ? 0.85 : 0.40;
-            ctx.beginPath();
-            ctx.moveTo(0, -size); ctx.lineTo(size * 0.88, size * 0.72); ctx.lineTo(-size * 0.88, size * 0.72);
-            ctx.closePath(); ctx.stroke();
-            ctx.restore();
+            ctx.beginPath(); ctx.moveTo(0, -size); ctx.lineTo(size * 0.88, size * 0.72); ctx.lineTo(-size * 0.88, size * 0.72); ctx.closePath(); ctx.stroke(); ctx.restore();
           }
         }
       }
@@ -1716,237 +1872,456 @@
       ctx.restore();
     }
 
-    // ══ 绘制爱心内部世界（含照片展示）══
-    function drawInnerWorld() {
-      if (innerWorldReveal <= 0.001) return;
-      const ease = innerWorldReveal * innerWorldReveal * (3 - 2 * innerWorldReveal);
-      innerWorldTime += 0.012;
+    // ══ 媒体世界：「记忆胶囊」沉浸式设计 ══
+    function initMediaWorld() {
+      mwParticles=[]; mwStars=[]; mwMeteors=[]; mwPetals=[]; mwPoems=[];
+
+      // DNA双螺旋粒子（两条对称光带相互缠绕）
+      for(let i=0;i<220;i++){
+        const strand = i%2; // 0=第一条链，1=第二条链
+        const t = i/220;
+        mwParticles.push({
+          strand, t,
+          offset: strand * Math.PI, // 第二条偏移180°
+          speed: 0.006 + Math.random()*0.006,
+          phase: Math.random()*Math.PI*2,
+          size: 1.2+Math.random()*3.2,
+          alpha: 0.28+Math.random()*0.62,
+          hue: strand===0 ? (320+Math.random()*30) : (200+Math.random()*40), // 玫红 vs 蓝紫
+          seed: Math.random()*1000,
+          orbitScale: 0.72+Math.random()*0.28, // 轨道椭圆度
+        });
+      }
+
+      // 背景星尘（深空）
+      for(let i=0;i<100;i++){
+        const big=i<15;
+        mwStars.push({
+          x:Math.random(), y:Math.random(),
+          size: big?(2.8+Math.random()*4.5):(0.4+Math.random()*1.6),
+          twinkle:Math.random()*1000,
+          alpha: big?(0.5+Math.random()*0.5):(0.15+Math.random()*0.40),
+          big, pulse:Math.random()*Math.PI*2,
+          hue: 300+Math.random()*80,
+        });
+      }
+
+      // 光流流星（高速掠过）
+      for(let i=0;i<8;i++){
+        mwMeteors.push({
+          progress: Math.random(),
+          speed: 0.0025+Math.random()*0.005,
+          y: 0.04+Math.random()*0.88,
+          len: 60+Math.random()*220,
+          alpha: 0.18+Math.random()*0.35,
+          angle: (-0.25+Math.random()*0.15),
+          seed: Math.random()*1000,
+          hue: 310+Math.random()*60,
+        });
+      }
+
+      // 花瓣漩涡（螺旋收束到媒体中心）
+      for(let i=0;i<40;i++){
+        mwPetals.push({
+          angle: (i/40)*Math.PI*2,
+          progress: Math.random(),
+          speed: 0.0010+Math.random()*0.0018,
+          size: 8+Math.random()*18,
+          alpha: 0.10+Math.random()*0.18,
+          spin: (Math.random()-0.5)*0.022,
+          rot: Math.random()*Math.PI*2,
+          seed: Math.random()*1000,
+          drift: (Math.random()-0.5)*1.2,
+          startR: (0.45+Math.random()*0.45)*Math.min(w||800,h||600),
+          endR: (0.04+Math.random()*0.10)*Math.min(w||800,h||600),
+          spiralTurns: 0.5+Math.random()*1.5, // 旋转圈数
+        });
+      }
+
+      // 情诗流星文字
+      const poems=[
+        '执子之手，与子偕老',
+        '愿得一心人，白首不相离',
+        '山有木兮木有枝，心悦君兮君不知',
+        '两情若是久长时，又岂在朝朝暮暮',
+        '问世间情为何物，直教人生死相许',
+        '此情可待成追忆，只是当时已惘然',
+        '愿逐月华流照君',
+        '相思一夜情多少，地角天涯不是长',
+      ];
+      poems.forEach((text,i)=>{
+        mwPoems.push({
+          text,
+          // 随机出发点（屏幕边缘）
+          startX: Math.random()<0.5 ? -0.15 : 1.15,
+          startY: 0.05+Math.random()*0.90,
+          endX: 0.15+Math.random()*0.70,
+          endY: 0.15+Math.random()*0.70,
+          progress: Math.random(),
+          speed: 0.0008+Math.random()*0.0012,
+          alpha: 0.16+Math.random()*0.18,
+          size: Math.max(12, Math.floor((unit||80)*0.048)),
+          fade: 0.5+Math.random()*0.5, // 淡出开始比例
+        });
+      });
+    }
+    initMediaWorld();
+
+    function openMediaWorld(portal) {
+      currentPortal=portal; mediaImgReady=false; mediaImg=null;
+      if(mediaVideo){try{mediaVideo.pause();}catch(e){} mediaVideo=null;}
+      if(portal.type==='photo'){
+        mediaImg=new Image();
+        // 不设置 crossOrigin，避免本地文件 CORS 问题
+        mediaImg.onload=()=>{mediaImgReady=true;};
+        mediaImg.onerror=()=>{
+          // 尝试不带 crossOrigin 重新加载
+          console.warn('图片加载失败:', portal.src);
+        };
+        mediaImg.src=portal.src;
+      } else {
+        mediaVideo=document.createElement('video');
+        mediaVideo.src=portal.src; mediaVideo.loop=true;
+        mediaVideo.muted=false; mediaVideo.playsInline=true;
+        mediaVideo.setAttribute('playsinline','');
+        mediaVideo.load();
+        mediaVideo.oncanplay=()=>{mediaImgReady=true; try{mediaVideo.play();}catch(e){};};
+        mediaVideo.onloadeddata=()=>{mediaImgReady=true; try{mediaVideo.play();}catch(e){};};
+      }
+      mediaWorldActive=true; mediaWorldReveal=0; mediaWorldTime=0;
+      initMediaWorld();
+    }
+    function closeMediaWorld() {
+      mediaWorldActive=false;
+      if(mediaVideo){try{mediaVideo.pause();}catch(e){} mediaVideo=null;}
+      currentPortal=null; mediaImgReady=false; mediaImg=null;
+    }
+
+    function drawMediaWorld() {
+      if (mediaWorldReveal <= 0.001) return;
+      const ease = mediaWorldReveal * mediaWorldReveal * (3 - 2 * mediaWorldReveal);
+      mediaWorldTime += 0.014;
+      const pulse2 = (Math.sin(mediaWorldTime * 2.2) + 1) * 0.5;
+      const heartbeat = (Math.sin(mediaWorldTime * 4.8) + 1) * 0.5; // 快速心跳
+      const minS = Math.min(w, h);
 
       ctx.save();
       ctx.globalAlpha = ease;
 
-      const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.88);
-      bg.addColorStop(0, 'rgba(62,0,36,1)');
-      bg.addColorStop(0.24, 'rgba(24,0,18,1)');
-      bg.addColorStop(0.62, 'rgba(6,0,8,1)');
-      bg.addColorStop(1, 'rgba(0,0,0,1)');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, w, h);
+      // ══ 1. 背景：深邃宇宙，中心玫红晕染 ══
+      const bg = ctx.createRadialGradient(cx, cy*0.88, 0, cx, cy, Math.max(w,h)*0.96);
+      bg.addColorStop(0,   'rgba(65,0,38,1)');
+      bg.addColorStop(0.15,'rgba(35,0,24,1)');
+      bg.addColorStop(0.40,'rgba(10,0,15,1)');
+      bg.addColorStop(0.75,'rgba(2,0,6,1)');
+      bg.addColorStop(1,   'rgba(0,0,1,1)');
+      ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
 
-      ctx.globalCompositeOperation = 'lighter';
-      for (const s of innerWorldStars) {
-        const sx = s.x * w;
-        const sy = s.y * h;
-        const tw = 0.5 + 0.5 * Math.sin(innerWorldTime * (s.big ? 2.8 : 2.0) + s.twinkle);
+      // ══ 2. 背景星尘 ══
+      ctx.globalCompositeOperation='lighter';
+      for(const s of mwStars){
+        const sx=s.x*w, sy=s.y*h;
+        const tw = 0.40+0.60*Math.sin(mediaWorldTime*(s.big?2.0:1.4)+s.twinkle);
         const a = s.alpha * tw * ease;
-        const grd = ctx.createRadialGradient(sx, sy, 0, sx, sy, s.size * (s.big ? 6 : 3));
-        grd.addColorStop(0, `rgba(255,235,242,${a})`);
-        grd.addColorStop(0.4, `rgba(255,168,210,${a * 0.38})`);
-        grd.addColorStop(1, 'rgba(255,80,120,0)');
-        ctx.fillStyle = grd;
-        ctx.beginPath();
-        ctx.arc(sx, sy, s.size * (s.big ? 6 : 3), 0, Math.PI * 2);
-        ctx.fill();
-        if (s.big) drawCrossStar(sx, sy, s.size * 3.2, a * 0.55);
+        const r = s.size*(s.big?5.5:2.8);
+        const grd=ctx.createRadialGradient(sx,sy,0,sx,sy,r);
+        grd.addColorStop(0,`hsla(${s.hue},90%,95%,${a})`);
+        grd.addColorStop(0.45,`hsla(${s.hue},80%,65%,${a*0.28})`);
+        grd.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2); ctx.fill();
+        if(s.big){
+          // 星芒
+          ctx.save(); ctx.translate(sx,sy);
+          ctx.strokeStyle=`hsla(${s.hue},85%,88%,${a*0.45})`;
+          ctx.lineWidth=Math.max(0.5, s.size*0.1);
+          const sl=s.size*2.8;
+          ctx.beginPath();
+          ctx.moveTo(-sl,0);ctx.lineTo(sl,0); ctx.moveTo(0,-sl);ctx.lineTo(0,sl);
+          ctx.moveTo(-sl*.65,-sl*.65);ctx.lineTo(sl*.65,sl*.65);
+          ctx.moveTo(-sl*.65,sl*.65);ctx.lineTo(sl*.65,-sl*.65);
+          ctx.stroke(); ctx.restore();
+        }
       }
 
-      for (const p of innerWorldParticles) {
-        p.angle += p.speed * (1 + p.depth * 0.55);
-        const baseR = Math.min(w, h) * 0.47 * p.radius;
-        const spiral = p.angle + p.arm * Math.PI;
-        const armTight = 0.38 + p.radius * 0.84;
-        const px2 = cx + Math.cos(spiral) * baseR * armTight;
-        const py2 = cy + Math.sin(spiral) * baseR * 0.48 * armTight + p.lift * Math.min(w, h);
-        const glow = ctx.createRadialGradient(px2, py2, 0, px2, py2, p.size * 5.4);
-        const hue = p.hue + innerWorldTime * 12;
-        const a = p.alpha * ease * (0.50 + 0.50 * Math.sin(innerWorldTime * 1.6 + p.seed));
-        glow.addColorStop(0, `hsla(${hue},100%,90%,${a})`);
-        glow.addColorStop(0.5, `hsla(${hue},92%,62%,${a * 0.34})`);
-        glow.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(px2, py2, p.size * 5.4, 0, Math.PI * 2);
-        ctx.fill();
+      // ══ 3. DNA双螺旋光带 ══
+      const source = mediaImg||mediaVideo;
+      const dnaR = minS * (0.36 + pulse2 * 0.02); // 螺旋轨道半径
+      const dnaH = minS * 0.55; // 螺旋纵向范围
+
+      for(const p of mwParticles){
+        p.t = (p.t + p.speed * 0.012) % 1;
+        const angle = p.t * Math.PI * 4 + p.offset; // 两圈螺旋
+        // 螺旋坐标（沿竖轴展开）
+        const helixY = (p.t - 0.5) * dnaH;
+        const helixX = Math.cos(angle) * dnaR * (0.35 + Math.abs(Math.sin(mediaWorldTime*0.4+p.seed))*0.15);
+        const px2 = cx + helixX;
+        const py2 = cy + helixY * 0.42 + Math.sin(angle*0.5 + mediaWorldTime*0.6 + p.seed) * minS*0.04;
+
+        const a = p.alpha*(0.40+0.60*Math.sin(mediaWorldTime*2.2+p.seed))*ease;
+        if(a < 0.02) continue;
+
+        // 粒子光点
+        const glow=ctx.createRadialGradient(px2,py2,0,px2,py2,p.size*4.2);
+        glow.addColorStop(0,`hsla(${p.hue},100%,92%,${a})`);
+        glow.addColorStop(0.4,`hsla(${p.hue},90%,62%,${a*0.28})`);
+        glow.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(px2,py2,p.size*4.2,0,Math.PI*2); ctx.fill();
       }
 
-      for (const m of innerWorldMeteors) {
+      // DNA连接键（横向线段，连接两条链）
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      for(let i=0;i<18;i++){
+        const t2 = (i/18 + mediaWorldTime*0.025)%1;
+        const angle2 = t2 * Math.PI * 4;
+        const helixY2 = (t2-0.5)*dnaH;
+        const x1 = cx + Math.cos(angle2)*dnaR*0.38;
+        const y1 = cy + helixY2*0.42;
+        const x2 = cx + Math.cos(angle2+Math.PI)*dnaR*0.38;
+        const y2 = cy + helixY2*0.42;
+        const lAlpha = 0.06 + 0.06*Math.sin(mediaWorldTime*1.8+i);
+        const lg = ctx.createLinearGradient(x1,y1,x2,y2);
+        lg.addColorStop(0, `rgba(255,140,200,${lAlpha*ease})`);
+        lg.addColorStop(0.5, `rgba(255,200,240,${lAlpha*1.5*ease})`);
+        lg.addColorStop(1, `rgba(160,140,255,${lAlpha*ease})`);
+        ctx.strokeStyle=lg; ctx.lineWidth=0.8+pulse2*0.4;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      }
+      ctx.restore();
+
+      // ══ 4. 流星 ══
+      for(const m of mwMeteors){
         m.progress += m.speed;
-        if (m.progress > 1.18) {
-          m.progress = -Math.random() * 0.35;
-          m.y = 0.08 + Math.random() * 0.55;
-          m.len = 90 + Math.random() * 140;
+        if(m.progress>1.25){m.progress=-Math.random()*0.5; m.y=0.04+Math.random()*0.88; m.len=60+Math.random()*240;}
+        const mx=(m.progress*1.4-0.2)*w;
+        const my=m.y*h+Math.sin(mediaWorldTime+m.seed)*18;
+        const ex=mx-Math.cos(m.angle)*m.len, ey=my-Math.sin(m.angle)*m.len;
+        const trail=ctx.createLinearGradient(ex,ey,mx,my);
+        trail.addColorStop(0,'rgba(255,255,255,0)');
+        trail.addColorStop(0.55,`hsla(${m.hue},85%,85%,${m.alpha*0.30*ease})`);
+        trail.addColorStop(1,`hsla(${m.hue},95%,96%,${m.alpha*ease})`);
+        ctx.strokeStyle=trail; ctx.lineWidth=1.4+pulse2*0.6;
+        ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(mx,my); ctx.stroke();
+        // 流星头部光点
+        const hg=ctx.createRadialGradient(mx,my,0,mx,my,6+pulse2*3);
+        hg.addColorStop(0,`rgba(255,245,255,${m.alpha*ease})`);
+        hg.addColorStop(1,'rgba(255,255,255,0)');
+        ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(mx,my,6+pulse2*3,0,Math.PI*2); ctx.fill();
+      }
+
+      // ══ 5. 媒体展示区（自适应，无心形裁剪）══
+      ctx.globalCompositeOperation='source-over';
+      if(mediaImgReady && source){
+        const sw=source.naturalWidth||source.videoWidth||16;
+        const sh=source.naturalHeight||source.videoHeight||9;
+        const maxW=w*0.80, maxH=h*0.66;
+        let dw,dh;
+        if(sw/sh > maxW/maxH){ dw=maxW; dh=maxW*(sh/sw); }
+        else { dh=maxH; dw=maxH*(sw/sh); }
+        const dx=cx-dw/2, dy=cy-dh/2 - h*0.025;
+        const r=Math.min(dw,dh)*0.04;
+
+        // 圆角矩形路径辅助（兼容不支持 roundRect 的浏览器）
+        function rRect(x,y,rw,rh,rad){
+          const mn=Math.min(rad,rw/2,rh/2);
+          if(ctx.roundRect){ ctx.roundRect(x,y,rw,rh,rad); return; }
+          ctx.moveTo(x+mn,y); ctx.lineTo(x+rw-mn,y); ctx.arcTo(x+rw,y,x+rw,y+mn,mn);
+          ctx.lineTo(x+rw,y+rh-mn); ctx.arcTo(x+rw,y+rh,x+rw-mn,y+rh,mn);
+          ctx.lineTo(x+mn,y+rh); ctx.arcTo(x,y+rh,x,y+rh-mn,mn);
+          ctx.lineTo(x,y+mn); ctx.arcTo(x,y,x+mn,y,mn); ctx.closePath();
         }
-        const mx = (m.progress * 1.3 - 0.16) * w;
-        const my = m.y * h + Math.sin(innerWorldTime + m.seed) * 12;
-        const trail = ctx.createLinearGradient(mx - m.len, my - m.len * 0.28, mx, my);
-        trail.addColorStop(0, 'rgba(255,255,255,0)');
-        trail.addColorStop(0.4, `rgba(255,204,224,${m.alpha * 0.28 * ease})`);
-        trail.addColorStop(1, `rgba(255,252,255,${m.alpha * ease})`);
-        ctx.strokeStyle = trail;
-        ctx.lineWidth = 1.3;
-        ctx.beginPath();
-        ctx.moveTo(mx - m.len, my - m.len * 0.28);
-        ctx.lineTo(mx, my);
-        ctx.stroke();
-      }
 
-      const pulse2 = (Math.sin(innerWorldTime * 2.2) + 1) * 0.5;
-      const heartR = Math.min(w, h) * (0.19 + pulse2 * 0.025);
-      const hg = ctx.createRadialGradient(cx, cy, 0, cx, cy, heartR * 2.15);
-      hg.addColorStop(0, `rgba(255,170,200,${0.30 * ease})`);
-      hg.addColorStop(0.4, `rgba(200,30,70,${0.13 * ease})`);
-      hg.addColorStop(1, 'rgba(60,0,15,0)');
-      ctx.fillStyle = hg;
-      ctx.beginPath(); ctx.arc(cx, cy, heartR * 2.15, 0, Math.PI * 2); ctx.fill();
-
-      ctx.globalCompositeOperation = 'source-over';
-      const photoSize = heartR * 1.28;
-      const photoHS   = photoSize / 16;
-
-      ctx.save();
-      ctx.translate(cx, cy);
-      const hazeG = ctx.createRadialGradient(0, -photoSize * 0.08, 0, 0, 0, photoSize * 1.2);
-      hazeG.addColorStop(0, `rgba(255,200,230,${0.18 * ease})`);
-      hazeG.addColorStop(0.5, `rgba(180,20,60,${0.10 * ease})`);
-      hazeG.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = hazeG;
-      ctx.beginPath();
-      for (let i = 0; i <= 260; i++) {
-        const t = (i / 260) * Math.PI * 2;
-        const hp = heartPoint(t, 1);
-        i === 0 ? ctx.moveTo(hp.x * photoHS * 1.25, hp.y * photoHS * 1.25)
-                : ctx.lineTo(hp.x * photoHS * 1.25, hp.y * photoHS * 1.25);
-      }
-      ctx.closePath(); ctx.fill();
-      ctx.restore();
-
-      if (innerPhotoReady) {
+        // ① 外层呼吸光晕（clip之前，不受裁剪影响）
         ctx.save();
-        ctx.translate(cx, cy);
-        ctx.beginPath();
-        for (let i = 0; i <= 260; i++) {
-          const t = (i / 260) * Math.PI * 2;
-          const hp = heartPoint(t, 1);
-          i === 0 ? ctx.moveTo(hp.x * photoHS, hp.y * photoHS)
-                  : ctx.lineTo(hp.x * photoHS, hp.y * photoHS);
+        ctx.globalCompositeOperation='lighter';
+        for(let gl=4;gl>=1;gl--){
+          const glA=(0.050-gl*0.008)*ease*(0.7+pulse2*0.3+heartbeat*0.12);
+          if(glA<=0.001) continue;
+          const spread=gl*10+pulse2*8;
+          ctx.strokeStyle=`rgba(255,${170+gl*15},${215+gl*8},${(0.50-gl*0.08)*(0.7+pulse2*0.3)})`;
+          ctx.shadowColor=`rgba(255,80,150,${glA*3})`;
+          ctx.shadowBlur=16+gl*18+pulse2*10;
+          ctx.lineWidth=1.5+gl*0.4+pulse2*0.7;
+          ctx.beginPath(); rRect(dx-spread,dy-spread,dw+spread*2,dh+spread*2,r+spread);
+          ctx.stroke();
         }
-        ctx.closePath(); ctx.clip();
-        const ir = innerPhoto.width / innerPhoto.height;
-        const bw = photoSize * 2.2, bh = photoSize * 2.0;
-        let dw, dh;
-        if (ir > bw / bh) { dh = bh; dw = dh * ir; }
-        else               { dw = bw; dh = dw / ir; }
-        ctx.globalAlpha = ease * 0.92;
-        ctx.drawImage(innerPhoto, -dw / 2, -dh / 2 - photoSize * 0.06, dw, dh);
-        ctx.globalAlpha = ease * 0.55;
-        ctx.globalCompositeOperation = 'lighter';
-        const shine = ctx.createRadialGradient(0, -photoSize * 0.22, 0, 0, 0, photoSize * 0.9);
-        shine.addColorStop(0, 'rgba(255,255,255,0.18)');
-        shine.addColorStop(0.5, 'rgba(255,180,210,0.08)');
-        shine.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = shine;
-        ctx.fillRect(-photoSize * 1.4, -photoSize * 1.4, photoSize * 2.8, photoSize * 2.8);
+        ctx.shadowBlur=0;
         ctx.restore();
+
+        // ② 图片本体（独立 save/clip/restore，确保 clip 不泄漏）
+        ctx.save();
+        ctx.globalAlpha=ease;
+        ctx.globalCompositeOperation='source-over';
+        ctx.beginPath(); rRect(dx,dy,dw,dh,r); ctx.clip();
+        ctx.drawImage(source,dx,dy,dw,dh);
+        // 顶部暗角
+        const topGrad=ctx.createLinearGradient(dx,dy,dx,dy+dh*0.22);
+        topGrad.addColorStop(0,'rgba(22,0,12,0.72)'); topGrad.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.globalAlpha=ease*0.36; ctx.fillStyle=topGrad; ctx.fillRect(dx,dy,dw,dh*0.22);
+        // 底部暗角
+        const botGrad=ctx.createLinearGradient(dx,dy+dh*0.76,dx,dy+dh);
+        botGrad.addColorStop(0,'rgba(0,0,0,0)'); botGrad.addColorStop(1,'rgba(16,0,8,0.78)');
+        ctx.globalAlpha=ease*0.46; ctx.fillStyle=botGrad; ctx.fillRect(dx,dy+dh*0.76,dw,dh*0.24);
+        // 玻璃高光
+        ctx.globalAlpha=ease*0.13; ctx.globalCompositeOperation='lighter';
+        const shineG=ctx.createLinearGradient(dx,dy,dx+dw*0.5,dy+dh*0.4);
+        shineG.addColorStop(0,'rgba(255,255,255,0.28)'); shineG.addColorStop(0.4,'rgba(255,220,240,0.06)'); shineG.addColorStop(1,'rgba(255,255,255,0)');
+        ctx.fillStyle=shineG; ctx.fillRect(dx,dy,dw,dh);
+        ctx.restore();
+
+        // ③ 边框线（clip之后，独立层）
+        ctx.save();
+        ctx.globalCompositeOperation='source-over';
+        ctx.shadowColor=`rgba(255,100,170,${0.60+pulse2*0.25})`;
+        ctx.shadowBlur=14+pulse2*12+heartbeat*6;
+        ctx.strokeStyle=`rgba(255,${190+Math.floor(pulse2*35)},${222+Math.floor(pulse2*18)},${0.78+pulse2*0.18})`;
+        ctx.lineWidth=1.6+pulse2*1.0;
+        ctx.beginPath(); rRect(dx,dy,dw,dh,r); ctx.stroke();
+        ctx.shadowBlur=0;
+        ctx.restore();
+
+        // ④ 四角星芒
+        ctx.save(); ctx.globalCompositeOperation='lighter';
+        [[dx,dy],[dx+dw,dy],[dx,dy+dh],[dx+dw,dy+dh]].forEach(([cx3,cy3])=>{
+          const cA=(0.38+pulse2*0.42+heartbeat*0.14)*ease;
+          const cS=minS*(0.020+pulse2*0.009);
+          ctx.strokeStyle=`rgba(255,215,242,${cA})`; ctx.lineWidth=0.9+pulse2*0.5;
+          ctx.beginPath();
+          ctx.moveTo(cx3-cS,cy3); ctx.lineTo(cx3+cS,cy3);
+          ctx.moveTo(cx3,cy3-cS); ctx.lineTo(cx3,cy3+cS);
+          ctx.moveTo(cx3-cS*.65,cy3-cS*.65); ctx.lineTo(cx3+cS*.65,cy3+cS*.65);
+          ctx.moveTo(cx3-cS*.65,cy3+cS*.65); ctx.lineTo(cx3+cS*.65,cy3-cS*.65);
+          ctx.stroke();
+        });
+        ctx.restore();
+
+        // ── 媒体下方标签 ──
+        const titleY=dy+dh+Math.min(h*0.038,32);
+        ctx.save();
+        ctx.globalAlpha=ease*(0.82+0.18*Math.sin(mediaWorldTime*1.4));
+        ctx.textAlign='center'; ctx.textBaseline='top';
+        ctx.font=`${Math.max(16,Math.floor(unit*0.095))}px "STKaiti","KaiTi","DFKai-SB",cursive`;
+        ctx.globalCompositeOperation='source-over';
+        ctx.shadowColor='rgba(255,100,165,0.95)'; ctx.shadowBlur=20;
+        const tg=ctx.createLinearGradient(cx-unit*0.22,0,cx+unit*0.22,0);
+        tg.addColorStop(0,'rgba(255,248,232,0.97)'); tg.addColorStop(0.5,'rgba(255,215,175,1.0)'); tg.addColorStop(1,'rgba(255,242,210,0.97)');
+        ctx.fillStyle=tg; ctx.fillText(currentPortal?currentPortal.label:'',cx,titleY);
+        ctx.shadowBlur=0;
+        ctx.globalAlpha=ease*0.38;
+        ctx.font=`${Math.max(10,Math.floor(unit*0.042))}px sans-serif`;
+        ctx.fillStyle='rgba(255,205,228,0.88)';
+        ctx.fillText('点击任意处退出',cx,titleY+Math.max(20,unit*0.070));
+        ctx.restore();
+
       } else {
-        ctx.save();
-        ctx.globalAlpha = ease * 0.45;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = `${Math.max(13, Math.floor(unit * 0.075))}px sans-serif`;
-        ctx.fillStyle = 'rgba(255,200,220,0.8)';
-        ctx.fillText('按 I 键上传照片', cx, cy - heartR * 0.1);
+        // 加载中：旋转光环动画
+        ctx.save(); ctx.globalAlpha=ease;
+        const loadR = minS*0.08;
+        const loadAngle = mediaWorldTime*2.8;
+        // 旋转弧
+        ctx.globalCompositeOperation='lighter';
+        const loadG=ctx.createConicalGradient?null:null; // fallback
+        for(let arc=0;arc<3;arc++){
+          const arcAlpha = (0.55-arc*0.15)*ease;
+          const arcR = loadR*(1+arc*0.22);
+          ctx.strokeStyle=`rgba(255,${120+arc*40},${180+arc*25},${arcAlpha})`;
+          ctx.lineWidth=2.5-arc*0.6;
+          ctx.beginPath();
+          ctx.arc(cx,cy,arcR,loadAngle+arc*Math.PI*0.65,loadAngle+arc*Math.PI*0.65+Math.PI*1.4);
+          ctx.stroke();
+        }
+        ctx.globalAlpha=ease*0.60;
+        ctx.globalCompositeOperation='source-over';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.font=`${Math.max(13,Math.floor(unit*0.072))}px "STKaiti","KaiTi",cursive`;
+        ctx.fillStyle='rgba(255,200,228,0.88)';
+        ctx.shadowColor='rgba(255,80,140,0.7)'; ctx.shadowBlur=16;
+        ctx.fillText('正在打开记忆的门…', cx, cy+loadR*1.9);
         ctx.restore();
       }
 
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = `rgba(255,220,235,${0.55 * ease})`;
-      ctx.lineWidth = 1.8 + pulse2 * 1.2;
-      ctx.shadowColor = 'rgba(255,80,130,0.9)';
-      ctx.shadowBlur = 18;
-      ctx.beginPath();
-      for (let i = 0; i <= 260; i++) {
-        const t = (i / 260) * Math.PI * 2;
-        const hp = heartPoint(t, 1);
-        i === 0 ? ctx.moveTo(hp.x * photoHS, hp.y * photoHS)
-                : ctx.lineTo(hp.x * photoHS, hp.y * photoHS);
-      }
-      ctx.closePath(); ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.restore();
-
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      for (const item of innerWorldPoems) {
-        const r = heartR * (1.42 + item.radius);
-        const px = cx + Math.cos(item.angle + innerWorldTime * 0.16) * r;
-        const py = cy + Math.sin(item.angle + innerWorldTime * 0.16) * r * 0.62;
-        const alpha = item.alpha * (0.42 + 0.58 * Math.sin(innerWorldTime * 1.25 + item.phase)) * ease;
+      // ══ 6. 情诗流星文字（像流星划过屏幕） ══
+      ctx.globalCompositeOperation='lighter';
+      for(const item of mwPoems){
+        item.progress = (item.progress + item.speed) % 1;
+        const t3 = item.progress;
+        // 从起点飞向终点，越过后消失
+        const px5 = (item.startX + (item.endX-item.startX)*t3)*w;
+        const py5 = (item.startY + (item.endY-item.startY)*t3)*h;
+        // 淡入淡出
+        const fadeIn = Math.min(1, t3 / 0.15);
+        const fadeOut = Math.max(0, 1 - (t3-item.fade)/(1-item.fade));
+        const a = item.alpha * Math.min(fadeIn, fadeOut) * ease;
+        if(a < 0.01) continue;
         ctx.save();
-        ctx.translate(px, py);
-        ctx.rotate(Math.sin(innerWorldTime * 0.2 + item.phase) * 0.08);
-        ctx.font = `${Math.max(14, Math.floor(unit * 0.05))}px "STKaiti","KaiTi",cursive`;
-        ctx.fillStyle = `rgba(255,228,236,${alpha})`;
-        ctx.shadowColor = `rgba(255,132,176,${alpha * 0.9})`;
-        ctx.shadowBlur = 14;
-        ctx.fillText(item.text, 0, 0);
+        ctx.translate(px5,py5);
+        // 文字朝运动方向倾斜
+        const angle3 = Math.atan2(item.endY-item.startY, item.endX-item.startX)*0.3;
+        ctx.rotate(angle3);
+        ctx.font=`${item.size}px "STKaiti","KaiTi",cursive`;
+        ctx.textAlign='left'; ctx.textBaseline='middle';
+        // 文字渐变（从粉白到玫红）
+        const tw2=ctx.measureText(item.text).width;
+        const tGrad=ctx.createLinearGradient(0,-item.size,tw2,item.size);
+        tGrad.addColorStop(0,`rgba(255,248,240,${a})`);
+        tGrad.addColorStop(0.5,`rgba(255,190,220,${a})`);
+        tGrad.addColorStop(1,`rgba(255,120,170,${a*0.7})`);
+        ctx.fillStyle=tGrad;
+        ctx.shadowColor=`rgba(255,100,160,${a*0.9})`; ctx.shadowBlur=12;
+        ctx.fillText(item.text,0,0);
         ctx.restore();
       }
 
-      for (const p of innerWorldPetals) {
-        p.progress += p.speed;
-        if (p.progress > 1) p.progress -= 1;
+      // ══ 7. 花瓣漩涡（螺旋收束） ══
+      ctx.globalCompositeOperation='source-over';
+      for(const p of mwPetals){
+        p.progress = (p.progress + p.speed) % 1;
         p.rot += p.spin;
-        let sx, sy;
-        if (p.side === 0) { sx = -0.08 * w; sy = (0.12 + ((p.seed * 1.37) % 0.76)) * h; }
-        else if (p.side === 1) { sx = 1.08 * w; sy = (0.12 + ((p.seed * 1.11) % 0.76)) * h; }
-        else if (p.side === 2) { sx = (0.12 + ((p.seed * 1.61) % 0.76)) * w; sy = -0.08 * h; }
-        else { sx = (0.12 + ((p.seed * 1.83) % 0.76)) * w; sy = 1.08 * h; }
-        const t = p.progress;
-        const x = sx + (cx - sx) * t + Math.sin(innerWorldTime * 0.9 + p.drift) * 18;
-        const y = sy + (cy - sy) * t + Math.cos(innerWorldTime * 0.8 + p.drift) * 14;
-        drawPetalShape(x, y, p.size * (1 - t * 0.18), p.rot, p.alpha * ease * (1 - t * 0.35));
+        const t4=p.progress;
+        const ease3=t4<0.5?2*t4*t4:1-Math.pow(-2*t4+2,2)/2;
+        const r4=p.startR+(p.endR-p.startR)*ease3;
+        // 螺旋：角度随进度旋转
+        const spiralAngle = p.angle + p.spiralTurns*Math.PI*2*t4 + Math.sin(mediaWorldTime*0.45+p.seed)*p.drift*0.3;
+        const px6=cx+Math.cos(spiralAngle)*r4;
+        const py6=cy+Math.sin(spiralAngle)*r4*0.62;
+        const pAlpha=p.alpha*ease*Math.sin(t4*Math.PI)*0.9; // 中间最亮，两端淡出
+        if(pAlpha<0.01) continue;
+        drawPetalShape(px6,py6,p.size*(0.4+0.6*Math.sin(t4*Math.PI)),p.rot,pAlpha);
       }
 
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = ease * (0.72 + 0.28 * Math.sin(innerWorldTime * 1.4));
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = `${Math.max(18, Math.floor(unit * 0.115))}px "STKaiti","KaiTi","DFKai-SB",cursive`;
-      ctx.shadowColor = 'rgba(255,120,160,0.9)'; ctx.shadowBlur = 26;
-      const tg = ctx.createLinearGradient(cx - unit * 0.28, 0, cx + unit * 0.28, 0);
-      tg.addColorStop(0, 'rgba(255,248,238,0.97)');
-      tg.addColorStop(0.5, 'rgba(255,205,175,0.99)');
-      tg.addColorStop(1, 'rgba(255,240,220,0.97)');
-      ctx.fillStyle = tg;
-      ctx.fillText('爱 · 无 尽 头', cx, cy + heartR * 1.22);
-      ctx.shadowBlur = 0;
-
-      ctx.globalAlpha = ease * 0.48;
-      ctx.font = `${Math.max(11, Math.floor(unit * 0.058))}px sans-serif`;
-      ctx.fillStyle = 'rgba(255,200,220,0.75)';
-      ctx.fillText('点击退出  |  按 I 换照片', cx, cy + heartR * 1.58);
+      // ══ 8. 中心量子涟漪（从媒体四周向外扩散的光环） ══
+      if(mediaImgReady && source){
+        ctx.globalCompositeOperation='lighter';
+        for(let ring=0;ring<5;ring++){
+          const ringT = ((mediaWorldTime*0.4 + ring*0.2) % 1);
+          const ringR = (0.18+ringT*0.42)*minS;
+          const ringA = (1-ringT)*0.08*ease*(0.5+pulse2*0.5);
+          if(ringA<0.005) continue;
+          const rg=ctx.createRadialGradient(cx,cy,ringR*0.88,cx,cy,ringR);
+          rg.addColorStop(0,`rgba(255,100,160,${ringA*1.2})`);
+          rg.addColorStop(0.5,`rgba(200,40,100,${ringA*0.5})`);
+          rg.addColorStop(1,'rgba(120,0,50,0)');
+          ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(cx,cy,ringR,0,Math.PI*2); ctx.fill();
+        }
+      }
 
       ctx.restore();
     }
+
+    // ══ 原版 drawInnerWorld 替换为空壳（不再使用） ══
+    function drawInnerWorld() {}
+
     // 归位：平滑回到正面朝向
     function triggerReturn() {
       if (isReturning) return;
-      // 将 rotX/rotY 归一化到 [-π, π]
       returnStartX = ((rotX + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
       returnStartY = ((rotY + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
-      rotX = returnStartX;
-      rotY = returnStartY;
-      returnProgress = 0;
-      isReturning = true;
-      velX = 0; velY = 0;
+      rotX = returnStartX; rotY = returnStartY;
+      returnProgress = 0; isReturning = true; velX = 0; velY = 0;
     }
 
     function syncPointerFromTouch(touch) {
       if (!touch) return;
-      pointer.x = touch.clientX;
-      pointer.y = touch.clientY;
+      pointer.x = touch.clientX; pointer.y = touch.clientY;
     }
 
     function frame(now) {
@@ -1956,204 +2331,309 @@
       const pulse = (Math.sin(time * 2.15) + 1) * 0.5;
       beatPhase = (time * 0.34) % 1;
 
-      // ── 3D 惯性旋转衰减 + 归位动画 ──
-      if (isReturning) {
-        returnProgress += 1 / RETURN_FRAMES;
-        if (returnProgress >= 1) {
-          returnProgress = 1;
-          isReturning = false;
-          rotX = 0; rotY = 0;
-          velX = 0; velY = 0;
-        } else {
-          // ease-out cubic
-          const e = 1 - Math.pow(1 - returnProgress, 3);
-          rotX = returnStartX * (1 - e);
-          rotY = returnStartY * (1 - e);
+      // ── 相机飞入动画 ──
+      if (zoomPhase === 'flying_in') {
+        zoomProgress = Math.min(1, zoomProgress + dt / ZOOM_FRAMES);
+        const ez = zoomProgress < 0.5 ? 4*zoomProgress*zoomProgress*zoomProgress : 1-Math.pow(-2*zoomProgress+2,3)/2;
+        camZ = ez * CAM_TARGET;
+        if (zoomProgress >= 1) {
+          zoomPhase = 'inside'; insideActive = true; camZ = CAM_TARGET;
+          insRotX = rotX; insRotY = rotY; insVelX = 0; insVelY = 0;
+          insFov = 2.0; insFovTarget = 2.0; fovHintTimer = 0; // 重置FOV
         }
-      } else if (!isDraggingHeart) {
-        velX *= 0.955;
-        velY *= 0.955;
-        rotX += velX;
-        rotY += velY;
       }
-      heartRotation = rotY;
 
-      // 更新内部世界过渡
-      const iwTarget = innerWorldActive ? 1 : 0;
-      innerWorldReveal += (iwTarget - innerWorldReveal) * 0.045;
+      // ── 外部旋转惯性 ──
+      if (!insideActive) {
+        if (isReturning) {
+          returnProgress += 1 / RETURN_FRAMES;
+          if (returnProgress >= 1) { returnProgress=1; isReturning=false; rotX=0; rotY=0; velX=0; velY=0; }
+          else { const e=1-Math.pow(1-returnProgress,3); rotX=returnStartX*(1-e); rotY=returnStartY*(1-e); }
+        } else if (!isDraggingHeart) {
+          velX *= 0.955; velY *= 0.955; rotX += velX; rotY += velY;
+        }
+        heartRotation = rotY;
+      }
 
-      drawBackground(pulse);
-      drawEdgeAura(pulse);
-      updateReturnBtn();
-      drawAmbientBits();
-      drawPetals();
-      drawDecorFrame();
-      drawHUD(pulse);
-      drawOuterHalo(pulse);
-      for (const s of shards) updateShard(s, pulse, dt);
-      for (const f of floaters) updateFloater(f, pulse, dt);
-      for (const s of streamers) updateStreamer(s);
-      drawGlowShell(pulse);
-      drawInnerNetwork(pulse);
-      drawMesh(pulse);
-      drawShards(pulse);
-      drawFloaters(pulse);
-      drawStreamers();
-      drawCore(pulse);
-      drawCenterTitle();
-      drawInnerWorld();
+      // ── 内部旋转惯性 ──
+      if (insideActive && !isDraggingInside) {
+        insVelX *= 0.955; insVelY *= 0.955;
+        insRotX += insVelX; insRotY += insVelY;
+        insRotX = Math.max(-Math.PI*0.46, Math.min(Math.PI*0.46, insRotX));
+      }
+
+      // ── 内部FOV平滑插值 ──
+      if (insideActive) {
+        insFov += (insFovTarget - insFov) * 0.10;
+        if (fovHintTimer > 0) fovHintTimer -= dt;
+      }
+
+      // ── 媒体世界淡入/淡出 ──
+      const mwTarget = mediaWorldActive ? 1 : 0;
+      mediaWorldReveal += (mwTarget - mediaWorldReveal) * 0.055;
+      if (mediaWorldActive) { /* mediaWorldTime updated inside drawMediaWorld */ }
+
+      // ── 端口碎片悬停检测（仅内部+非媒体模式） ──
+      if (insideActive && !mediaWorldActive) {
+        for (const s of shards) {
+          if (!s.isPortal) continue;
+          const ps2 = Math.max(0.35, Math.min(4.0, s.projScale || 1));
+          s.portalHovered = Math.hypot(pointer.x - s.x, pointer.y - s.y) < Math.max(40, s.size * ps2 * 2.8);
+        }
+        const anyHov = shards.some(s => s.isPortal && s.portalHovered);
+        canvas.style.cursor = anyHov ? 'pointer' : 'grab';
+      }
+
+      if (!insideActive) {
+        // ════ 外部模式（原版完整流程）════
+        // 原版 innerWorldActive/innerWorldReveal 不再使用，保持为false/0
+        const iwTarget = 0;
+        innerWorldReveal += (iwTarget - innerWorldReveal) * 0.045;
+
+        drawBackground(pulse);
+        drawEdgeAura(pulse);
+        updateReturnBtn();
+        drawAmbientBits();
+        drawPetals();
+        drawDecorFrame();
+        drawHUD(pulse);
+        drawOuterHalo(pulse);
+        for (const s of shards) updateShard(s, pulse, dt);
+        for (const f of floaters) updateFloater(f, pulse, dt);
+        for (const s of streamers) updateStreamer(s);
+        drawGlowShell(pulse);
+        drawInnerNetwork(pulse);
+        drawMesh(pulse);
+        drawShards(pulse);
+        drawFloaters(pulse);
+        drawStreamers();
+        drawCore(pulse);
+        drawCenterTitle();
+        // 推进特效叠加
+        if (zoomPhase === 'flying_in') {
+          const ez2 = zoomProgress < 0.5 ? 4*zoomProgress*zoomProgress*zoomProgress : 1-Math.pow(-2*zoomProgress+2,3)/2;
+          ctx.save();
+          const vig=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*0.65);
+          vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(0.45,`rgba(0,0,0,${ez2*0.38})`); vig.addColorStop(1,`rgba(0,0,0,${ez2*0.90})`);
+          ctx.fillStyle=vig; ctx.fillRect(0,0,w,h);
+          if (ez2>0.55 && ez2<0.88) {
+            const flash=Math.sin((ez2-0.55)/0.33*Math.PI);
+            const fg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*0.55);
+            fg.addColorStop(0,`rgba(255,230,240,${flash*0.80})`); fg.addColorStop(0.25,`rgba(255,100,150,${flash*0.30})`); fg.addColorStop(1,'rgba(0,0,0,0)');
+            ctx.globalCompositeOperation='lighter'; ctx.fillStyle=fg; ctx.fillRect(0,0,w,h);
+          }
+          ctx.restore();
+        }
+      } else {
+        // ════ 内部模式 ════
+        ctx.clearRect(0,0,w,h);
+        const bg2=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*0.9);
+        bg2.addColorStop(0,'rgba(52,0,22,1)'); bg2.addColorStop(0.4,'rgba(14,0,8,1)'); bg2.addColorStop(1,'rgba(2,0,4,1)');
+        ctx.fillStyle=bg2; ctx.fillRect(0,0,w,h);
+        // 内壁红光
+        ctx.save(); ctx.globalCompositeOperation='screen';
+        const vg=ctx.createRadialGradient(cx,cy,Math.min(w,h)*0.08,cx,cy,Math.max(w,h)*0.72);
+        vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(0.55,`rgba(255,28,55,${0.04+pulse*0.025})`); vg.addColorStop(0.82,`rgba(220,12,38,${0.09+pulse*0.035})`); vg.addColorStop(1,`rgba(180,0,18,${0.16+pulse*0.04})`);
+        ctx.fillStyle=vg; ctx.fillRect(0,0,w,h); ctx.restore();
+
+        for (const s of shards) updateShard(s, pulse, dt);
+        for (const f of floaters) updateFloater(f, pulse, dt);
+        drawMesh(pulse);
+        drawShards(pulse);
+        drawFloaters(pulse);
+
+        // 内部提示 + FOV缩放指示器
+        if (!mediaWorldActive) {
+          ctx.save(); ctx.textAlign='center'; ctx.textBaseline='bottom';
+          ctx.font=`${Math.max(11,Math.floor(unit*0.044))}px sans-serif`;
+          ctx.fillStyle='rgba(255,185,205,0.30)';
+          ctx.fillText('拖拽环顾四周  ·  滚轮/捏合调节密度  ·  点击发光碎片探索记忆  ·  双击退出',cx,h-18);
+
+          // FOV滑块指示器（调整时显示）
+          if (fovHintTimer > 0) {
+            const alpha = Math.min(1, fovHintTimer / 30);
+            const barW = Math.min(260, w * 0.38);
+            const barH = 6;
+            const bx = cx - barW/2;
+            const by = h - 58;
+            const pct = (insFovTarget - INS_FOV_MIN) / (INS_FOV_MAX - INS_FOV_MIN);
+
+            // 背景轨道
+            ctx.save();
+            ctx.globalAlpha = alpha * 0.55;
+            ctx.fillStyle = 'rgba(255,180,210,0.18)';
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(bx, by, barW, barH, 3) : ctx.rect(bx, by, barW, barH);
+            ctx.fill();
+
+            // 填充进度
+            const grad = ctx.createLinearGradient(bx, 0, bx+barW, 0);
+            grad.addColorStop(0, 'rgba(255,120,160,0.85)');
+            grad.addColorStop(1, 'rgba(255,220,240,0.85)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(bx, by, barW * pct, barH, 3) : ctx.rect(bx, by, barW * pct, barH);
+            ctx.fill();
+
+            // 标签
+            ctx.globalAlpha = alpha * 0.75;
+            ctx.font = `${Math.max(10,Math.floor(unit*0.042))}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(255,210,230,0.9)';
+            const label = pct < 0.35 ? '碎片·稀疏' : pct > 0.72 ? '碎片·密集' : '碎片·均匀';
+            ctx.fillText(label, cx, by - 6);
+            ctx.restore();
+          }
+          ctx.restore();
+        }
+        // 媒体世界叠加
+        drawMediaWorld();
+      }
+
       requestAnimationFrame(frame);
     }
 
     // 归位按钮
     const returnBtn = document.getElementById('returnBtn');
-    returnBtn.addEventListener('click', () => { if (!innerWorldActive) triggerReturn(); });
+    returnBtn.addEventListener('click', () => { if (!insideActive) triggerReturn(); });
 
     // 旋转后显示归位按钮，归位完毕后隐藏
     function updateReturnBtn() {
       const hasRotation = Math.abs(rotX) > 0.08 || Math.abs(rotY) > 0.08;
-      const show = hasRotation && !isReturning && !innerWorldActive;
+      const show = hasRotation && !isReturning && !insideActive && zoomPhase === 'idle';
       returnBtn.style.opacity = show ? '0.82' : '0';
       returnBtn.style.pointerEvents = show ? 'auto' : 'none';
     }
 
-    // 按 R 或 双击 归位
+    // 按 R 键归位 / Escape 退出内部或媒体世界
     window.addEventListener('keydown', (e) => {
-      if ((e.key === 'r' || e.key === 'R') && !e.repeat && !innerWorldActive) {
-        e.preventDefault();
-        triggerReturn();
+      if ((e.key==='r'||e.key==='R') && !e.repeat && !insideActive) { e.preventDefault(); triggerReturn(); }
+      if (e.key==='Escape') {
+        if (mediaWorldActive) { closeMediaWorld(); return; }
+        if (insideActive) { insideActive=false; zoomPhase='idle'; camZ=0; rotX=insRotX; rotY=insRotY; velX=0; velY=0; }
       }
     });
     window.addEventListener('dblclick', (e) => {
-      if (!innerWorldActive && !isPointInCenterRevealZone(e.clientX, e.clientY)) {
-        triggerReturn();
-      }
+      if (mediaWorldActive) { closeMediaWorld(); return; }
+      if (insideActive) { insideActive=false; zoomPhase='idle'; camZ=0; rotX=insRotX; rotY=insRotY; velX=0; velY=0; return; }
+      if (!isPointInCenterRevealZone(e.clientX, e.clientY)) triggerReturn();
     });
 
     window.addEventListener('resize', resize);
 
-    // ─── 鼠标事件：拖拽旋转 + 指针光标 ───
+    // ── 鼠标事件 ──
     window.addEventListener('mousemove', (e) => {
-      pointer.x = e.clientX;
-      pointer.y = e.clientY;
-
-      if (isDraggingHeart) {
-        dragDX = e.clientX - dragPrevX;
-        dragDY = e.clientY - dragPrevY;
-        const sensitivity = 0.007;
-        rotY += dragDX * sensitivity;
-        rotX += dragDY * sensitivity;
-        // 限制 X 轴翻转范围，防止上下颠倒超过 ±85°
-        rotX = Math.max(-Math.PI * 0.47, Math.min(Math.PI * 0.47, rotX));
-        velY = dragDX * sensitivity;
-        velX = dragDY * sensitivity;
-        dragPrevX = e.clientX;
-        dragPrevY = e.clientY;
-      } else {
-        if (isPointInCenterRevealZone(e.clientX, e.clientY)) {
-          canvas.style.cursor = 'pointer';
-        } else {
-          canvas.style.cursor = 'grab';
-        }
+      pointer.x=e.clientX; pointer.y=e.clientY;
+      if (!insideActive && isDraggingHeart) {
+        const dx=e.clientX-dragPrevX,dy=e.clientY-dragPrevY,sen=0.007;
+        rotY+=dx*sen; rotX+=dy*sen; rotX=Math.max(-Math.PI*0.47,Math.min(Math.PI*0.47,rotX));
+        velY=dx*sen; velX=dy*sen; dragPrevX=e.clientX; dragPrevY=e.clientY;
+      } else if (insideActive && !mediaWorldActive && isDraggingInside) {
+        const dx=e.clientX-dragPrevX,dy=e.clientY-dragPrevY,sen=0.0042;
+        insRotY-=dx*sen; insRotX+=dy*sen; insRotX=Math.max(-Math.PI*0.46,Math.min(Math.PI*0.46,insRotX));
+        insVelY=-dx*sen; insVelX=dy*sen; dragPrevX=e.clientX; dragPrevY=e.clientY;
+      } else if (!insideActive) {
+        canvas.style.cursor = isPointInCenterRevealZone(e.clientX,e.clientY) ? 'pointer' : 'grab';
       }
     });
-
     window.addEventListener('mousedown', (e) => {
-      if (innerWorldActive) return;
-      if (e.button !== 0) return;
-      isReturning = false;          // 拖拽打断归位
-      isDraggingHeart = true;
-      dragPrevX = e.clientX;
-      dragPrevY = e.clientY;
-      dragDX = 0; dragDY = 0;
-      velX = 0; velY = 0;
-      canvas.style.cursor = 'grabbing';
-      e.preventDefault();
-    });
-
-    window.addEventListener('mouseup', (e) => {
-      if (isDraggingHeart) {
-        isDraggingHeart = false;
-        // 松手时保留最后一帧的角速度，形成惯性
-        canvas.style.cursor = isPointInCenterRevealZone(e.clientX, e.clientY) ? 'pointer' : 'grab';
+      if (e.button!==0) return;
+      if (!insideActive && zoomPhase==='idle') {
+        isReturning=false; isDraggingHeart=true; dragPrevX=e.clientX; dragPrevY=e.clientY; dragDX=0; dragDY=0; velX=0; velY=0;
+        canvas.style.cursor='grabbing'; e.preventDefault();
+      } else if (insideActive && !mediaWorldActive) {
+        isDraggingInside=true; dragPrevX=e.clientX; dragPrevY=e.clientY;
+        canvas.style.cursor='grabbing'; e.preventDefault();
       }
     });
+    window.addEventListener('mouseup', () => { isDraggingHeart=false; isDraggingInside=false; canvas.style.cursor='grab'; });
+    window.addEventListener('mouseleave', () => { isDraggingHeart=false; isDraggingInside=false; pointer.x=-9999; pointer.y=-9999; });
 
-    window.addEventListener('mouseleave', () => {
-      isDraggingHeart = false;
-      pointer.x = -9999;
-      pointer.y = -9999;
-    });
-
-    // 鼠标点击：中部进入内部世界
+    // 鼠标点击
     window.addEventListener('click', (e) => {
-      if (isDraggingHeart) return;
-      if (innerWorldActive) {
-        innerWorldActive = false;
+      if (mediaWorldActive) { closeMediaWorld(); return; }
+      if (isDraggingHeart||isDraggingInside) return;
+      if (insideActive) {
+        for (const s of shards) {
+          if (!s.isPortal) continue;
+          const ps3=Math.max(0.35,Math.min(4.0,s.projScale||1));
+          if (Math.hypot(e.clientX-s.x,e.clientY-s.y) < Math.max(44,s.size*ps3*3.0)) { openMediaWorld(MEDIA_PORTALS[s.portalIdx]); return; }
+        }
         return;
       }
-      if (isPointInCenterRevealZone(e.clientX, e.clientY)) {
-        innerWorldActive = true;
-      }
+      if (zoomPhase!=='idle') return;
+      if (isPointInCenterRevealZone(e.clientX,e.clientY)) { zoomPhase='flying_in'; zoomProgress=0; camZ=0; insideActive=false; }
     });
 
-    // ─── 触屏事件 ───
+    // ── 触屏事件 ──
     let touchDragActive = false;
-
     window.addEventListener('touchstart', (e) => {
-      const t = e.touches[0];
-      if (!t) return;
+      const t=e.touches[0]; if(!t) return;
       syncPointerFromTouch(t);
-
-      if (innerWorldActive) {
-        // 内部世界中：点击退出
-        innerWorldActive = false;
+      if (mediaWorldActive) { closeMediaWorld(); return; }
+      if (insideActive) {
+        let hit=false;
+        for(const s of shards){if(!s.isPortal)continue;const ps3=Math.max(0.35,Math.min(4.0,s.projScale||1));if(Math.hypot(t.clientX-s.x,t.clientY-s.y)<Math.max(52,s.size*ps3*3.5)){openMediaWorld(MEDIA_PORTALS[s.portalIdx]);hit=true;break;}}
+        if(!hit){touchDragActive=true;dragPrevX=t.clientX;dragPrevY=t.clientY;}
         return;
       }
-
-      if (isPointInCenterRevealZone(t.clientX, t.clientY)) {
-        innerWorldActive = true;
+      if (zoomPhase!=='idle') return;
+      if (isPointInCenterRevealZone(t.clientX,t.clientY)) { zoomPhase='flying_in'; zoomProgress=0; camZ=0; insideActive=false; }
+      else { touchDragActive=true; isReturning=false; dragPrevX=t.clientX; dragPrevY=t.clientY; dragDX=0; dragDY=0; velX=0; velY=0; }
+    }, {passive:true});
+    window.addEventListener('touchmove', (e) => {
+      const t=e.touches[0]; if(!t||!touchDragActive) return;
+      syncPointerFromTouch(t);
+      if (insideActive) {
+        const dx=t.clientX-dragPrevX,dy=t.clientY-dragPrevY,sen=0.0042;
+        insRotY-=dx*sen; insRotX+=dy*sen; insRotX=Math.max(-Math.PI*0.46,Math.min(Math.PI*0.46,insRotX));
+        insVelY=-dx*sen; insVelX=dy*sen; dragPrevX=t.clientX; dragPrevY=t.clientY;
       } else {
-        touchDragActive = true;
-        isReturning = false;
-        dragPrevX = t.clientX;
-        dragPrevY = t.clientY;
-        dragDX = 0; dragDY = 0;
-        velX = 0; velY = 0;
+        const dx=t.clientX-dragPrevX,dy=t.clientY-dragPrevY,sen=0.007;
+        rotY+=dx*sen; rotX+=dy*sen; rotX=Math.max(-Math.PI*0.47,Math.min(Math.PI*0.47,rotX));
+        velY=dx*sen; velX=dy*sen; dragPrevX=t.clientX; dragPrevY=t.clientY;
+      }
+    }, {passive:true});
+    window.addEventListener('touchend', () => { touchDragActive=false; pointer.x=-9999; pointer.y=-9999; });
+    window.addEventListener('touchcancel', () => { touchDragActive=false; pointer.x=-9999; pointer.y=-9999; });
+
+    // ── 滚轮缩放（内部视角密度调节） ──
+    window.addEventListener('wheel', (e) => {
+      if (!insideActive || mediaWorldActive) return;
+      e.preventDefault();
+      // 向上滚 = 视角变宽 = 碎片变密；向下滚 = 视角变窄 = 碎片变稀
+      const delta = e.deltaY > 0 ? -0.18 : 0.18;
+      insFovTarget = Math.max(INS_FOV_MIN, Math.min(INS_FOV_MAX, insFovTarget + delta));
+      fovHintTimer = 90; // 显示约1.5秒
+    }, { passive: false });
+
+    // ── 双指捏合缩放（触屏） ──
+    let pinchStartDist = 0;
+    let pinchStartFov = 2.0;
+    window.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2 && insideActive && !mediaWorldActive) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        pinchStartDist = Math.hypot(dx, dy);
+        pinchStartFov = insFovTarget;
+        touchDragActive = false; // 捏合时禁用拖拽
       }
     }, { passive: true });
 
     window.addEventListener('touchmove', (e) => {
-      const t = e.touches[0];
-      if (!t) return;
-      syncPointerFromTouch(t);
-
-      if (touchDragActive) {
-        const sensitivity = 0.007;
-        const dx2 = t.clientX - dragPrevX;
-        const dy2 = t.clientY - dragPrevY;
-        rotY += dx2 * sensitivity;
-        rotX += dy2 * sensitivity;
-        rotX = Math.max(-Math.PI * 0.47, Math.min(Math.PI * 0.47, rotX));
-        velY = dx2 * sensitivity;
-        velX = dy2 * sensitivity;
-        dragPrevX = t.clientX;
-        dragPrevY = t.clientY;
+      if (e.touches.length === 2 && insideActive && !mediaWorldActive) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        if (pinchStartDist > 0) {
+          const ratio = dist / pinchStartDist;
+          // 拉开=视角变宽(密集)，捏合=视角变窄(稀疏)
+          insFovTarget = Math.max(INS_FOV_MIN, Math.min(INS_FOV_MAX, pinchStartFov * ratio));
+          fovHintTimer = 90;
+        }
       }
-    }, { passive: true });
-
-    window.addEventListener('touchend', () => {
-      touchDragActive = false;
-      pointer.x = -9999;
-      pointer.y = -9999;
-    });
-
-    window.addEventListener('touchcancel', () => {
-      touchDragActive = false;
-      pointer.x = -9999;
-      pointer.y = -9999;
-    });
-
+    }, { passive: false });
     resize();
     // 提示文字自动消失
     setTimeout(() => {
